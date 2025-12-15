@@ -1,0 +1,289 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if service %}Edit{% else %}Add{% endif %} Service - LocalKonnect{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {% if service %}Edit Service{% else %}Add New Service{% endif %}
+            </h1>
+            <p class="text-gray-600">Fill in the details about your service</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <form method="post" class="space-y-6" id="serviceForm" onsubmit="updateHiddenSelect()">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-semibold text-red-700 mb-2">Please correct the following errors:</p>
+                            <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ field|title }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Category *</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Subcategories Section -->
+                <div id="subcategorySection" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Select Subcategories
+                        <span class="text-gray-500 font-normal">(Click to add/remove)</span>
+                    </label>
+                    <div id="subcategorySearch" class="mb-3">
+                        <input type="text" 
+                               id="subcategorySearchInput" 
+                               placeholder="Search subcategories..."
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="subcategoryOptions" class="flex flex-wrap gap-2 mb-3 max-h-64 overflow-y-auto p-3 bg-gray-50 rounded-lg">
+                        <!-- Subcategories will be loaded here -->
+                    </div>
+                    <div id="selectedSubcategories" class="flex flex-wrap gap-2 p-3 bg-blue-50 rounded-lg min-h-[60px]">
+                        <p class="text-sm text-gray-500 w-full" id="noSubcategoriesMsg">No subcategories selected</p>
+                        <!-- Selected subcategories will appear here as tags -->
+                    </div>
+                    {{ form.subcategories }}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
+                        {{ form.years_of_experience }}
+                        {% if form.years_of_experience.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.years_of_experience.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pricing Model *</label>
+                        {{ form.pricing_model }}
+                        {% if form.pricing_model.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.pricing_model.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Price (optional)</label>
+                        {{ form.min_price }}
+                        {% if form.min_price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.min_price.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Price (optional)</label>
+                        {{ form.max_price }}
+                        {% if form.max_price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.max_price.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex justify-between pt-4 border-t">
+                    <a href="{% url 'contractors:services' %}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        {% if service %}Update Service{% else %}Add Service{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let allSubcategories = [];
+let selectedSubcategories = new Set();
+
+// Load subcategories when category changes
+document.getElementById('id_category').addEventListener('change', function() {
+    const categoryId = this.value;
+    if (categoryId) {
+        loadSubcategories(categoryId);
+    } else {
+        document.getElementById('subcategorySection').style.display = 'none';
+    }
+});
+
+// Load existing selected subcategories on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('id_category');
+    const subcategorySelect = document.querySelector('.subcategory-select');
+    
+    // Load pre-selected subcategories if editing
+    if (subcategorySelect) {
+        Array.from(subcategorySelect.selectedOptions).forEach(option => {
+            selectedSubcategories.add(option.value);
+        });
+    }
+    
+    // Load subcategories if category is already selected
+    if (categorySelect.value) {
+        loadSubcategories(categorySelect.value);
+    }
+});
+
+async function loadSubcategories(categoryId) {
+    try {
+        const response = await fetch(`/contractor/api/subcategories/${categoryId}/`);
+        const data = await response.json();
+        
+        allSubcategories = data.subcategories;
+        
+        if (allSubcategories.length > 0) {
+            document.getElementById('subcategorySection').style.display = 'block';
+            renderSubcategoryOptions();
+            renderSelectedSubcategories();
+        } else {
+            document.getElementById('subcategorySection').style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading subcategories:', error);
+    }
+}
+
+function renderSubcategoryOptions(searchTerm = '') {
+    const container = document.getElementById('subcategoryOptions');
+    container.innerHTML = '';
+    
+    const filteredSubcategories = allSubcategories.filter(sub => 
+        !selectedSubcategories.has(sub.id.toString()) &&
+        sub.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    if (filteredSubcategories.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 w-full">No subcategories available</p>';
+        return;
+    }
+    
+    filteredSubcategories.forEach(sub => {
+        const tag = document.createElement('button');
+        tag.type = 'button';
+        tag.className = 'px-3 py-1.5 bg-white border border-gray-300 rounded-full text-sm hover:bg-blue-50 hover:border-blue-300 transition-colors';
+        tag.textContent = sub.name;
+        tag.onclick = () => addSubcategory(sub.id, sub.name);
+        container.appendChild(tag);
+    });
+}
+
+function renderSelectedSubcategories() {
+    const container = document.getElementById('selectedSubcategories');
+    const noMsg = document.getElementById('noSubcategoriesMsg');
+    
+    // Clear container except the no message
+    Array.from(container.children).forEach(child => {
+        if (child.id !== 'noSubcategoriesMsg') {
+            child.remove();
+        }
+    });
+    
+    if (selectedSubcategories.size === 0) {
+        noMsg.style.display = 'block';
+    } else {
+        noMsg.style.display = 'none';
+        
+        selectedSubcategories.forEach(subId => {
+            const sub = allSubcategories.find(s => s.id.toString() === subId.toString());
+            if (sub) {
+                const tag = document.createElement('div');
+                tag.className = 'flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-full text-sm';
+                tag.innerHTML = `
+                    <span>${sub.name}</span>
+                    <button type="button" class="ml-2 hover:text-red-200" onclick="removeSubcategory('${sub.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(tag);
+            }
+        });
+    }
+    
+    // Update hidden select field
+    updateHiddenSelect();
+}
+
+function addSubcategory(id, name) {
+    selectedSubcategories.add(id.toString());
+    renderSubcategoryOptions(document.getElementById('subcategorySearchInput').value);
+    renderSelectedSubcategories();
+}
+
+function removeSubcategory(id) {
+    selectedSubcategories.delete(id.toString());
+    renderSubcategoryOptions(document.getElementById('subcategorySearchInput').value);
+    renderSelectedSubcategories();
+}
+
+function updateHiddenSelect() {
+    const select = document.querySelector('.subcategory-select');
+    if (select) {
+        // Clear all selections
+        Array.from(select.options).forEach(option => {
+            option.selected = false;
+        });
+        
+        // Select the chosen subcategories
+        selectedSubcategories.forEach(subId => {
+            const option = Array.from(select.options).find(opt => opt.value === subId.toString());
+            if (option) {
+                option.selected = true;
+            } else {
+                // Create option if it doesn't exist
+                const newOption = document.createElement('option');
+                newOption.value = subId;
+                newOption.selected = true;
+                select.appendChild(newOption);
+            }
+        });
+    }
+}
+
+// Search functionality
+document.getElementById('subcategorySearchInput').addEventListener('input', function(e) {
+    renderSubcategoryOptions(e.target.value);
+});
+</script>
+{% endblock %}

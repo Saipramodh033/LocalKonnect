@@ -1,0 +1,165 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sign Up - LocalKonnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <h2 class="text-3xl font-bold text-center mb-2">Create Account</h2>
+            <p class="text-gray-600 text-center mb-8">Join LocalKonnect today</p>
+            
+            <!-- User Type Selection -->
+            <div class="mb-6" x-data="{ userType: '{{ request.GET.type|default:'customer' }}' }">
+                <label class="block text-sm font-medium text-gray-700 mb-2">I am a:</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <button type="button"
+                            @click="userType = 'customer'"
+                            :class="userType === 'customer' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-4 py-3 rounded-lg font-semibold transition-colors">
+                        <i class="fas fa-user mr-2"></i> Customer
+                    </button>
+                    <button type="button"
+                            @click="userType = 'contractor'"
+                            :class="userType === 'contractor' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-4 py-3 rounded-lg font-semibold transition-colors">
+                        <i class="fas fa-hard-hat mr-2"></i> Contractor
+                    </button>
+                </div>
+                
+                <!-- Registration Form -->
+                <form method="POST" 
+                      class="mt-6 space-y-4"
+                      hx-post="{% url 'users:register' %}"
+                      hx-swap="outerHTML"
+                      hx-target="#form-container">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_type" :value="userType">
+                    
+                    <div id="form-container">
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" 
+                                   name="email" 
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            {% if form.email.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.email.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Username -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <input type="text" 
+                                   name="username" 
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            {% if form.username.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.username.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Name -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" 
+                                       name="first_name" 
+                                       required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% if form.first_name.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {% for error in form.first_name.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" 
+                                       name="last_name" 
+                                       required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% if form.last_name.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {% for error in form.last_name.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Password -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" 
+                                   name="password1" 
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            {% if form.password1.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.password1.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Confirm Password -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input type="password" 
+                                   name="password2" 
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            {% if form.password2.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.password2.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Terms -->
+                        <div class="flex items-start">
+                            <input type="checkbox" 
+                                   name="terms" 
+                                   required
+                                   class="mt-1 mr-2">
+                            <label class="text-sm text-gray-600">
+                                I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> 
+                                and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Login Link -->
+            <p class="text-center text-gray-600 mt-6">
+                Already have an account? 
+                <a href="{% url 'users:login' %}" class="text-blue-600 hover:underline font-semibold">Log In</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

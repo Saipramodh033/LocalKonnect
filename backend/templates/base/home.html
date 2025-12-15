@@ -1,0 +1,195 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}LocalKonnect - Find Trusted Local Contractors{% endblock %}
+
+{% block main_classes %}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+    <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-6xl font-bold mb-6">
+            Find Trusted Local Contractors
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 text-blue-100">
+            Discover reliable contractors in your area with transparent trust scores
+        </p>
+        
+        <!-- Quick Search -->
+        <div class="max-w-3xl mx-auto">
+            <form action="/#search" method="GET" 
+                  class="flex flex-col md:flex-row gap-4">
+                <input type="text" 
+                       name="service" 
+                       placeholder="What service do you need? (e.g., plumber, painter)"
+                       class="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white">
+                <input type="text" 
+                       name="location" 
+                       placeholder="Your location or postal code"
+                       class="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white">
+                <button type="submit" 
+                        class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-search mr-2"></i> Search
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Why Choose LocalKonnect?</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-3xl text-blue-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Trust Scoring System</h3>
+                <p class="text-gray-600">
+                    Our sophisticated algorithm calculates transparent trust scores based on 
+                    verified customer feedback, experience, and job completion.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-map-marked-alt text-3xl text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Local Discovery</h3>
+                <p class="text-gray-600">
+                    Find contractors near you with our interactive map. Filter by distance, 
+                    service type, and trust score for perfect matches.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-robot text-3xl text-purple-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">AI-Powered Protection</h3>
+                <p class="text-gray-600">
+                    Advanced AI detects fraudulent reviews and suspicious patterns, 
+                    ensuring authentic ratings and protecting both customers and contractors.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- For Customers -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 text-blue-600">
+                    <i class="fas fa-user mr-2"></i> For Customers
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Search & Discover</h4>
+                            <p class="text-gray-600">Find contractors by service type, location, and trust score on our interactive map.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Review Profiles</h4>
+                            <p class="text-gray-600">Check trust scores, experience, portfolios, and verified reviews.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Build Trust</h4>
+                            <p class="text-gray-600">After a job, add trust marks and reviews to help others find reliable contractors.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- For Contractors -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 text-green-600">
+                    <i class="fas fa-hard-hat mr-2"></i> For Contractors
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Create Profile</h4>
+                            <p class="text-gray-600">Set up your business profile, add services, and define your service area.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Get Verified</h4>
+                            <p class="text-gray-600">Complete identity verification to earn a verified badge and boost trust.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mr-4 flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Grow Your Business</h4>
+                            <p class="text-gray-600">Deliver quality work, earn trust marks, and watch your trust score grow.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-16 bg-blue-600 text-white">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+        <p class="text-xl mb-8">Join thousands of customers and contractors using LocalKonnect</p>
+        <div class="flex flex-col md:flex-row gap-4 justify-center">
+            <a href="{% url 'users:register' %}?type=customer" 
+               class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Sign Up as Customer
+            </a>
+            <a href="{% url 'users:register' %}?type=contractor" 
+               class="bg-purple-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors border-2 border-white">
+                Join as Contractor
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+                <div class="text-4xl font-bold text-blue-600 mb-2">10K+</div>
+                <div class="text-gray-600">Contractors</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-green-600 mb-2">50K+</div>
+                <div class="text-gray-600">Customers</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-purple-600 mb-2">100K+</div>
+                <div class="text-gray-600">Trust Marks</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-orange-600 mb-2">4.8/5</div>
+                <div class="text-gray-600">Average Rating</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

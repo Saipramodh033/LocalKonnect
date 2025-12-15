@@ -1,0 +1,230 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Find Contractors - LocalKonnect{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" x-data="{ viewMode: localStorage.getItem('searchViewMode') || 'list' }" x-init="$watch('viewMode', value => localStorage.setItem('searchViewMode', value))" @view-changed.window="if (viewMode === 'map' && map) { setTimeout(() => map.invalidateSize(), 100); }">
+    
+    <!-- Page Header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Find Trusted Contractors</h1>
+            <p class="text-gray-600">Search for verified professionals in your area</p>
+        </div>
+        
+        <!-- View Toggle -->
+        <div class="flex bg-white rounded-lg shadow p-1">
+            <button @click="viewMode = 'list'" 
+                    :class="viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-800'"
+                    class="px-4 py-2 rounded-md transition-colors flex items-center space-x-2">
+                <i class="fas fa-list"></i>
+                <span>List</span>
+            </button>
+            <button @click="viewMode = 'map'; $nextTick(() => { if (map) map.invalidateSize(); })" 
+                    :class="viewMode === 'map' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-800'"
+                    class="px-4 py-2 rounded-md transition-colors flex items-center space-x-2">
+                <i class="fas fa-map"></i>
+                <span>Map</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <form method="get" action="{% url 'search:results' %}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Service Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Category</label>
+                    <select name="category" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Services</option>
+                        {% for category in categories %}
+                            <option value="{{ category.slug }}" 
+                                    {% if request.GET.category == category.slug %}selected{% endif %}>
+                                {{ category.icon }} {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Search Query -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" 
+                           name="q" 
+                           value="{{ query }}"
+                           placeholder="Business name or service"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- Location -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <input type="text" 
+                           name="location" 
+                           value="{{ location }}"
+                           placeholder="City or postal code"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- Search Button -->
+                <div class="flex items-end">
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i> Search
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Advanced Filters -->
+            <details class="mt-4">
+                <summary class="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-sliders-h mr-2"></i> Advanced Filters
+                </summary>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                    
+                    <!-- Min Trust Score -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Min Trust Score: <span id="trust-value">{{ request.GET.min_trust|default:'0' }}</span>
+                        </label>
+                        <input type="range" 
+                               name="min_trust" 
+                               min="0" 
+                               max="100" 
+                               step="10"
+                               value="{{ request.GET.min_trust|default:'0' }}"
+                               class="w-full"
+                               oninput="document.getElementById('trust-value').textContent = this.value">
+                    </div>
+                    
+                    <!-- Min Experience -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Min Experience: <span id="exp-value">{{ request.GET.min_experience|default:'0' }}</span> years
+                        </label>
+                        <input type="range" 
+                               name="min_experience" 
+                               min="0" 
+                               max="20" 
+                               step="1"
+                               value="{{ request.GET.min_experience|default:'0' }}"
+                               class="w-full"
+                               oninput="document.getElementById('exp-value').textContent = this.value">
+                    </div>
+                    
+                    <!-- Verified Only -->
+                    <div class="flex items-end">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   name="verified_only" 
+                                   value="1"
+                                   {% if request.GET.verified_only %}checked{% endif %}
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Verified contractors only</span>
+                        </label>
+                    </div>
+                </div>
+            </details>
+        </form>
+    </div>
+    
+    <!-- Results Count -->
+    {% if contractors %}
+    <div class="mb-4">
+        <p class="text-gray-600">Found <strong>{{ total_results }}</strong> result{{ total_results|pluralize }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- List View -->
+    <div x-show="viewMode === 'list'" id="results-container" class="space-y-4">
+        {% include 'search/results_partial.html' %}
+    </div>
+    
+    <!-- Map View -->
+    <div x-show="viewMode === 'map'" x-cloak class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div id="map" style="height: 600px; width: 100%;"></div>
+    </div>
+</div>
+
+<style>
+[x-cloak] { display: none !important; }
+</style>
+
+<script>
+let map = null;
+let markers = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map immediately
+    initMap();
+    
+    // Fix map size when switching to map view from localStorage
+    setTimeout(() => {
+        const savedView = localStorage.getItem('searchViewMode');
+        if (savedView === 'map' && map) {
+            map.invalidateSize();
+        }
+    }, 200);
+});
+
+function initMap() {
+    if (map) return; // Already initialized
+    
+    // Initialize map
+    map = L.map('map', {
+        center: [40.7128, -74.0060],
+        zoom: 11,
+        scrollWheelZoom: true
+    });
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Add markers for contractors
+    {% if contractors %}
+    markers = L.markerClusterGroup();
+    
+    {% for service in contractors %}
+    {% if service.contractor.office_location %}
+    const marker{{ forloop.counter }} = L.marker([{{ service.contractor.office_location.y }}, {{ service.contractor.office_location.x }}])
+        .bindPopup(`
+            <div class="p-2">
+                <h3 class="font-bold text-lg mb-2">{{ service.contractor.business_name|default:service.contractor.user.get_full_name }}</h3>
+                <p class="text-sm text-gray-600 mb-2">{{ service.category.name }}</p>
+                <div class="flex items-center mb-2">
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                        Trust Score: {{ service.trust_score|floatformat:0 }}
+                    </span>
+                    {% if service.contractor.is_identity_verified %}
+                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                        <i class="fas fa-check-circle"></i> Verified
+                    </span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'search:contractor_detail' service.contractor.id %}" 
+                   class="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                    View Profile
+                </a>
+            </div>
+        `);
+    markers.addLayer(marker{{ forloop.counter }});
+    {% endif %}
+    {% endfor %}
+    
+    map.addLayer(markers);
+    
+    // Fit map to markers
+    if (markers.getLayers().length > 0) {
+        map.fitBounds(markers.getBounds().pad(0.1));
+    }
+    {% endif %}
+}
+</script>
+{% endblock %}

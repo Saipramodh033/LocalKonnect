@@ -1,0 +1,378 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Contractor - LocalKonnect{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Contractor Profile</h1>
+                <p class="text-gray-600">Manage your business information and verification status</p>
+            </div>
+            <a href="{% url 'users:settings' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                <i class="fas fa-cog mr-2"></i>Account Settings
+            </a>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+            <div class="flex items-start space-x-6">
+                <div class="flex-shrink-0">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Profile" class="w-24 h-24 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-gray-800">{{ user.get_full_name }}</h3>
+                    <p class="text-gray-600">{{ user.email }}</p>
+                    {% if user.phone_number %}
+                    <p class="text-gray-600">{{ user.phone_number }}</p>
+                    {% endif %}
+                    <div class="mt-2 flex items-center space-x-4">
+                        {% if user.is_email_verified %}
+                        <span class="text-sm text-green-600"><i class="fas fa-check-circle mr-1"></i>Email Verified</span>
+                        {% else %}
+                        <span class="text-sm text-yellow-600"><i class="fas fa-exclamation-circle mr-1"></i>Email Not Verified</span>
+                        {% endif %}
+                        {% if user.is_phone_verified %}
+                        <span class="text-sm text-green-600"><i class="fas fa-check-circle mr-1"></i>Phone Verified</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Status -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Verification Status</h2>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-700">Identity Status: 
+                        <span class="font-semibold {% if profile.is_identity_verified %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {{ profile.get_verification_status_display }}
+                        </span>
+                    </p>
+                    {% if profile.verification_date %}
+                    <p class="text-sm text-gray-500 mt-1">Verified on: {{ profile.verification_date|date:"F d, Y" }}</p>
+                    {% endif %}
+                    {% if profile.insurance_verified %}
+                    <p class="text-sm text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i>Insurance Verified</p>
+                    {% endif %}
+                </div>
+                {% if not profile.is_identity_verified %}
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-id-card mr-2"></i>Start Verification
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Business Information -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Business Information</h2>
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                    <p class="text-sm font-semibold text-red-700">Please correct the errors below.</p>
+                </div>
+                {% endif %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                        {{ form.business_name }}
+                        {% if form.business_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.business_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Registration Number</label>
+                        {{ form.business_registration_number }}
+                        {% if form.business_registration_number.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.business_registration_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Office Address</label>
+                    {{ form.office_address }}
+                    {% if form.office_address.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.office_address.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">
+                        <button type="button" onclick="openMapModal()" class="text-blue-600 hover:text-blue-700">
+                            <i class="fas fa-map-marker-alt mr-1"></i>Set location on map
+                        </button>
+                    </p>
+                </div>
+
+                <!-- Hidden fields for coordinates -->
+                <input type="hidden" id="office_latitude" name="office_latitude" value="{{ profile.office_location.y|default:'' }}">
+                <input type="hidden" id="office_longitude" name="office_longitude" value="{{ profile.office_location.x|default:'' }}">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Years in Business</label>
+                        {{ form.years_in_business }}
+                        {% if form.years_in_business.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.years_in_business.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Service Radius (km)</label>
+                        {{ form.service_radius_km }}
+                        {% if form.service_radius_km.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.service_radius_km.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                        {{ form.website }}
+                        {% if form.website.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.website.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Company Size</label>
+                        {{ form.company_size }}
+                        {% if form.company_size.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.company_size.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    {{ form.is_accepting_jobs }}
+                    <label class="ml-2 text-sm text-gray-700">Currently accepting new jobs</label>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Social Media Links (Combined in Business Info) -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Social Media & Online Presence</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <i class="fas fa-globe text-blue-600 mb-2 text-2xl"></i>
+                        <p class="text-sm text-gray-600 mb-1">Website</p>
+                        {% if profile.website %}
+                        <a href="{{ profile.website }}" target="_blank" class="text-sm text-blue-600 hover:underline break-all">{{ profile.website }}</a>
+                        {% else %}
+                        <p class="text-sm text-gray-400">Not set</p>
+                        {% endif %}
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <i class="fab fa-linkedin text-blue-700 mb-2 text-2xl"></i>
+                        <p class="text-sm text-gray-600 mb-1">LinkedIn</p>
+                        {% if profile.linkedin %}
+                        <a href="{{ profile.linkedin }}" target="_blank" class="text-sm text-blue-600 hover:underline break-all">{{ profile.linkedin }}</a>
+                        {% else %}
+                        <p class="text-sm text-gray-400">Not set</p>
+                        {% endif %}
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <i class="fab fa-facebook text-blue-800 mb-2 text-2xl"></i>
+                        <p class="text-sm text-gray-600 mb-1">Facebook</p>
+                        {% if profile.facebook %}
+                        <a href="{{ profile.facebook }}" target="_blank" class="text-sm text-blue-600 hover:underline break-all">{{ profile.facebook }}</a>
+                        {% else %}
+                        <p class="text-sm text-gray-400">Not set</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Profile Statistics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-3xl font-bold text-blue-600">{{ profile.total_jobs_completed }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Jobs Completed</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <p class="text-3xl font-bold text-green-600">{{ profile.profile_views }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Profile Views</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <p class="text-3xl font-bold text-purple-600">{{ profile.contact_clicks }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Contact Clicks</p>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-3xl font-bold text-yellow-600">{{ profile.get_overall_trust_score }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Trust Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Modal -->
+<div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Set Office Location</h3>
+            <button onclick="closeMapModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search for location</label>
+                <div class="flex gap-2">
+                    <input type="text" id="mapSearchInput" placeholder="Enter address or place name" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="searchLocation()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+            </div>
+            <div id="locationMap" class="w-full h-96 rounded-lg border border-gray-300"></div>
+            <p class="text-sm text-gray-600 mt-3">
+                <i class="fas fa-info-circle mr-1"></i>
+                Click on the map to set your office location, or search for an address above
+            </p>
+        </div>
+        <div class="p-4 border-t flex justify-end gap-2">
+            <button onclick="closeMapModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                Cancel
+            </button>
+            <button onclick="saveLocation()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-save mr-2"></i>Save Location
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let locationMap = null;
+let locationMarker = null;
+let selectedLocation = {
+    lat: {{ profile.office_location.y|default:"40.7128" }},
+    lng: {{ profile.office_location.x|default:"-74.0060" }}
+};
+
+function openMapModal() {
+    document.getElementById('mapModal').classList.remove('hidden');
+    
+    // Initialize map if not already done
+    if (!locationMap) {
+        locationMap = L.map('locationMap').setView([selectedLocation.lat, selectedLocation.lng], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(locationMap);
+        
+        // Add existing marker if location is set
+        locationMarker = L.marker([selectedLocation.lat, selectedLocation.lng], {
+            draggable: true
+        }).addTo(locationMap);
+        
+        // Update location when marker is dragged
+        locationMarker.on('dragend', function(e) {
+            const position = e.target.getLatLng();
+            selectedLocation = { lat: position.lat, lng: position.lng };
+            reverseGeocode(position.lat, position.lng);
+        });
+        
+        // Add click handler to map
+        locationMap.on('click', function(e) {
+            selectedLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+            locationMarker.setLatLng(e.latlng);
+            reverseGeocode(e.latlng.lat, e.latlng.lng);
+        });
+    }
+    
+    // Fix map rendering issue when shown in modal
+    setTimeout(() => {
+        locationMap.invalidateSize();
+    }, 100);
+}
+
+function closeMapModal() {
+    document.getElementById('mapModal').classList.add('hidden');
+}
+
+function searchLocation() {
+    const query = document.getElementById('mapSearchInput').value;
+    if (!query) return;
+    
+    // Use Nominatim geocoding API
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const result = data[0];
+                const lat = parseFloat(result.lat);
+                const lng = parseFloat(result.lon);
+                
+                selectedLocation = { lat, lng };
+                locationMarker.setLatLng([lat, lng]);
+                locationMap.setView([lat, lng], 15);
+                
+                // Update address field
+                document.querySelector('input[name="office_address"]').value = result.display_name;
+            } else {
+                alert('Location not found. Please try a different search term.');
+            }
+        })
+        .catch(error => {
+            console.error('Geocoding error:', error);
+            alert('Error searching for location. Please try again.');
+        });
+}
+
+function reverseGeocode(lat, lng) {
+    // Get address from coordinates
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.display_name) {
+                document.querySelector('input[name="office_address"]').value = data.display_name;
+            }
+        })
+        .catch(error => {
+            console.error('Reverse geocoding error:', error);
+        });
+}
+
+function saveLocation() {
+    // Update hidden fields with selected coordinates
+    document.getElementById('office_latitude').value = selectedLocation.lat;
+    document.getElementById('office_longitude').value = selectedLocation.lng;
+    
+    closeMapModal();
+    
+    // Show success message
+    const addressField = document.querySelector('input[name="office_address"]');
+    addressField.classList.add('ring-2', 'ring-green-500');
+    setTimeout(() => {
+        addressField.classList.remove('ring-2', 'ring-green-500');
+    }, 2000);
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+<!-- Results Partial for HTMX Updates -->
+{% if contractors %}
+    {% for service in contractors %}
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <!-- Contractor Info -->
+                <div class="flex items-center mb-2">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                        {{ service.contractor.business_name|default:service.contractor.user.get_full_name }}
+                    </h3>
+                    {% if service.contractor.is_identity_verified %}
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            <i class="fas fa-check-circle"></i> Verified
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Service Category -->
+                <p class="text-gray-600 mb-2">
+                    <i class="fas fa-briefcase mr-1"></i> {{ service.category.name }}
+                    {% if service.years_of_experience > 0 %}
+                        • {{ service.years_of_experience }} years experience
+                    {% endif %}
+                </p>
+                
+                <!-- Trust Score -->
+                <div class="flex items-center mb-3">
+                    <div class="flex items-center">
+                        {% if service.trust_score >= 60 %}
+                            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl font-bold text-green-700">{{ service.trust_score|floatformat:0 }}</span>
+                            </div>
+                        {% elif service.trust_score >= 20 %}
+                            <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl font-bold text-yellow-700">{{ service.trust_score|floatformat:0 }}</span>
+                            </div>
+                        {% else %}
+                            <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <span class="text-2xl font-bold text-red-700">{{ service.trust_score|floatformat:0 }}</span>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <div class="text-sm text-gray-600">Trust Score</div>
+                            <div class="text-xs text-gray-500">{{ service.verified_trust_marks }} verified / {{ service.total_trust_marks }} total marks</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <p class="text-gray-700 mb-3">{{ service.description|truncatewords:30 }}</p>
+                
+                <!-- Pricing -->
+                {% if service.min_price %}
+                <p class="text-sm text-gray-600 mb-2">
+                    <i class="fas fa-dollar-sign mr-1"></i>
+                    ${{ service.min_price }} - ${{ service.max_price }} ({{ service.get_pricing_model_display }})
+                </p>
+                {% endif %}
+                
+                <!-- Location -->
+                <p class="text-sm text-gray-500">
+                    <i class="fas fa-map-marker-alt mr-1"></i> 
+                    {{ service.contractor.office_address }}
+                    • Service radius: {{ service.contractor.service_radius_km }} km
+                </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="ml-4 flex flex-col space-y-2">
+                <a href="{% url 'search:contractor_detail' service.contractor.id %}" 
+                   class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-center">
+                    View Profile
+                </a>
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap">
+                    Contact
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">No contractors found</h3>
+        <p class="text-gray-600 mb-4">Try adjusting your search filters or browse all contractors</p>
+        <a href="{% url 'search:results' %}" class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Clear Filters
+        </a>
+    </div>
+{% endif %}

@@ -1,0 +1,187 @@
+{% load static %}
+
+<nav class="bg-white shadow-lg sticky top-0 z-40" x-data="{ mobileMenuOpen: false, userMenuOpen: false }">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                    <i class="fas fa-handshake text-primary text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">LocalKonnect</span>
+                </a>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-6">
+                {% if user.is_authenticated %}
+                    {% if user.user_type == 'customer' %}
+                        <a href="{% url 'search:results' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-search mr-1"></i> Find Contractors
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'search:results' %}" 
+                       class="text-gray-700 hover:text-primary transition-colors">
+                        <i class="fas fa-search mr-1"></i> Find Contractors
+                    </a>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                    {% if user.user_type == 'contractor' %}
+                        <a href="{% url 'contractors:dashboard' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-dashboard mr-1"></i> Dashboard
+                        </a>
+                        <a href="{% url 'contractors:services' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-briefcase mr-1"></i> My Services
+                        </a>
+                    {% elif user.user_type == 'customer' %}
+                        <a href="{% url 'customer:dashboard' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-dashboard mr-1"></i> Dashboard
+                        </a>
+                        <a href="{% url 'trust:my_trust_marks' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-handshake mr-1"></i> My Trust Marks
+                        </a>
+                        <a href="{% url 'customer:saved_contractors' %}" 
+                           class="text-gray-700 hover:text-primary transition-colors">
+                            <i class="fas fa-heart mr-1"></i> Saved Contractors
+                        </a>
+                    {% endif %}
+                    
+                    <!-- User Menu -->
+                    <div class="relative" @click.away="userMenuOpen = false">
+                        <button @click="userMenuOpen = !userMenuOpen" 
+                                class="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" 
+                                     class="w-8 h-8 rounded-full object-cover">
+                            {% else %}
+                                <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                                    {{ user.first_name|first|upper|default:user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <span>{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown -->
+                        <div x-show="userMenuOpen" 
+                             x-transition
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50">
+                            {% if user.user_type == 'contractor' %}
+                            <a href="{% url 'contractors:profile' %}" 
+                               class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i> Profile
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'users:settings' %}" 
+                               class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </a>
+                            <hr class="my-2">
+                            <form method="POST" action="{% url 'users:logout' %}" class="block">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'users:login' %}" 
+                       class="text-gray-700 hover:text-primary transition-colors">
+                        Login
+                    </a>
+                    <a href="{% url 'users:register' %}" 
+                       class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Sign Up
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                    class="md:hidden text-gray-700">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" 
+             x-transition
+             class="md:hidden py-4 space-y-2">
+            {% if user.is_authenticated %}
+                {% if user.user_type == 'customer' %}
+                    <a href="{% url 'search:results' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-search mr-2"></i> Find Contractors
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'search:results' %}" 
+                   class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                    <i class="fas fa-search mr-2"></i> Find Contractors
+                </a>
+            {% endif %}
+            
+            {% if user.is_authenticated %}
+                {% if user.user_type == 'contractor' %}
+                    <a href="{% url 'contractors:dashboard' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-dashboard mr-2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'contractors:services' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-briefcase mr-2"></i> My Services
+                    </a>
+                {% elif user.user_type == 'customer' %}
+                    <a href="{% url 'customer:dashboard' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-dashboard mr-2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'trust:my_trust_marks' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-handshake mr-2"></i> My Trust Marks
+                    </a>
+                    <a href="{% url 'customer:saved_contractors' %}" 
+                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-heart mr-2"></i> Saved Contractors
+                    </a>
+                {% endif %}
+                <hr class="my-2">
+                {% if user.user_type == 'contractor' %}
+                <a href="{% url 'contractors:profile' %}" 
+                   class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                    <i class="fas fa-user mr-2"></i> Profile
+                </a>
+                {% endif %}
+                <a href="{% url 'users:settings' %}" 
+                   class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                    <i class="fas fa-cog mr-2"></i> Settings
+                </a>
+                <form method="POST" action="{% url 'users:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="w-full text-left block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'users:login' %}" 
+                   class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
+                    Login
+                </a>
+                <a href="{% url 'users:register' %}" 
+                   class="block bg-primary text-white px-4 py-2 rounded text-center">
+                    Sign Up
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
