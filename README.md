@@ -320,11 +320,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
 
-This project is licensed under the MIT License.
-
-## 👤 Author
 
 A full-stack Django application demonstrating:
 - Advanced geospatial features with PostGIS
@@ -372,16 +368,6 @@ docker-compose -f docker-compose.prod.yml up -d
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues and questions:
-- GitHub Issues: https://github.com/yourusername/localkonnect/issues
-- Email: support@localkonnect.com
 
 ## Acknowledgments
 
