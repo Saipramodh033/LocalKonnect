@@ -1,0 +1,16 @@
+Django==4.2.8
+django-cors-headers==4.3.1
+django-filter==23.5
+django-environ==0.11.2
+psycopg2-binary==2.9.9
+django-celery-beat==2.5.0
+celery==5.3.4
+redis==5.0.1
+Pillow==10.1.0
+python-decouple==3.8
+google-generativeai==0.3.2
+gunicorn==21.2.0
+django-redis
+whitenoise==6.6.0
+drf-yasg==1.21.7
+geopy==2.4.1
