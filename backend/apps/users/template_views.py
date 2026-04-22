@@ -44,12 +44,12 @@ def register_view(request):
         else:
             # If HTMX request, return form with errors
             if request.headers.get('HX-Request'):
-                return render(request, 'auth/register_simple.html', {'form': form})
+                return render(request, 'auth/register.html', {'form': form})
             messages.error(request, 'Please correct the errors below.')
     else:
         form = UserRegistrationForm()
     
-    return render(request, 'auth/register_simple.html', {'form': form})
+    return render(request, 'auth/register.html', {'form': form})
 
 
 @require_http_methods(["GET", "POST"])

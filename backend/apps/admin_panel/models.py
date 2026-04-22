@@ -4,7 +4,6 @@ Admin panel models for moderation
 
 from django.db import models
 from apps.users.models import User
-from apps.trust.models import TrustMark, FraudPattern
 from apps.contractors.models import ContractorDispute
 import uuid
 

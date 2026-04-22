@@ -21,17 +21,9 @@ app.conf.beat_schedule = {
         'task': 'apps.trust.tasks.batch_recompute_trust_scores',
         'schedule': crontab(hour=2, minute=0),  # Run at 2 AM daily
     },
-    'scan-fraud-patterns': {
-        'task': 'apps.trust.tasks.scan_fraud_patterns',
-        'schedule': crontab(minute='*/30'),  # Every 30 minutes
-    },
     'cleanup-expired-verifications': {
         'task': 'apps.contractors.tasks.cleanup_expired_verifications',
         'schedule': crontab(hour=3, minute=0),  # Run at 3 AM daily
-    },
-    'refresh-ranking-cache': {
-        'task': 'apps.search.tasks.refresh_ranking_cache',
-        'schedule': crontab(minute='*/15'),  # Every 15 minutes
     },
 }
 

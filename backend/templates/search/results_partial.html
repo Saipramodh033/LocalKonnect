@@ -42,7 +42,7 @@
                         {% endif %}
                         <div>
                             <div class="text-sm text-gray-600">Trust Score</div>
-                            <div class="text-xs text-gray-500">{{ service.verified_trust_marks }} verified / {{ service.total_trust_marks }} total marks</div>
+                            <div class="text-xs text-gray-500">{{ service.verified_trust_marks }} verified / {{ service.total_trust_marks }} total feedback</div>
                         </div>
                     </div>
                 </div>
@@ -63,6 +63,9 @@
                     <i class="fas fa-map-marker-alt mr-1"></i> 
                     {{ service.contractor.office_address }}
                     • Service radius: {{ service.contractor.service_radius_km }} km
+                    {% if service.distance_km is not None %}
+                    • {{ service.distance_km|floatformat:1 }} km away
+                    {% endif %}
                 </p>
             </div>
             
@@ -72,9 +75,6 @@
                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap text-center">
                     View Profile
                 </a>
-                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap">
-                    Contact
-                </button>
             </div>
         </div>
     </div>

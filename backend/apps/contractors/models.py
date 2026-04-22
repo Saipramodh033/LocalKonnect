@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.indexes import GistIndex
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.users.models import User
 import uuid
@@ -78,6 +79,7 @@ class ContractorProfile(models.Model):
             models.Index(fields=['verification_status']),
             models.Index(fields=['is_identity_verified']),
             models.Index(fields=['is_accepting_jobs']),
+            GistIndex(fields=['office_location'], name='contractor_office_location_gist'),
         ]
     
     def __str__(self):
@@ -126,7 +128,7 @@ class ContractorDispute(models.Model):
     
     # Reference to what's being disputed
     trust_mark = models.ForeignKey(
-        'trust.TrustMark',
+        'trust.Feedback',
         on_delete=models.CASCADE,
         null=True,
         blank=True,

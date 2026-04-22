@@ -28,15 +28,11 @@
                 </div>
                 
                 <!-- Registration Form -->
-                <form method="POST" 
-                      class="mt-6 space-y-4"
-                      hx-post="{% url 'users:register' %}"
-                      hx-swap="outerHTML"
-                      hx-target="#form-container">
+                                <form method="POST" class="mt-6 space-y-4">
                     {% csrf_token %}
                     <input type="hidden" name="user_type" :value="userType">
                     
-                    <div id="form-container">
+                                        <div>
                         <!-- Email -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>

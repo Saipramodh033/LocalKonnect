@@ -52,10 +52,6 @@ urlpatterns = [
     path('contractor/', include('apps.contractors.urls')),  # Contractor pages
     path('customer/', include('apps.customer.urls')),  # Customer pages (to be created)
     path('trust/', include('apps.trust.urls')),  # Trust system pages
-    
-    # API endpoints (users REST API removed)
-    path('api/services/', include('apps.services.urls')),
-    path('api/admin/', include('apps.admin_panel.urls')),
 ]
 
 # Serve media files in development

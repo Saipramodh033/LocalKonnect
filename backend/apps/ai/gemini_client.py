@@ -128,12 +128,12 @@ def summarize_reviews(reviews_text_list):
         }
 
 
-def check_fraud_likelihood(trust_mark):
+def check_fraud_likelihood(feedback):
     """
-    Check fraud likelihood for a trust mark using AI.
+    Check fraud likelihood for a feedback entry using AI.
     
     Args:
-        trust_mark: TrustMark instance
+        feedback: Feedback instance
     
     Returns:
         dict: {
@@ -147,24 +147,23 @@ def check_fraud_likelihood(trust_mark):
     
     try:
         # Gather context
-        customer = trust_mark.customer
-        service = trust_mark.contractor_service
+        customer = feedback.customer
+        service = feedback.contractor_service
         
         # Count recent trusts from this customer
-        from apps.trust.models import TrustMark
-        recent_trusts = TrustMark.objects.filter(
+        from apps.trust.models import Feedback
+        recent_trusts = Feedback.objects.filter(
             customer=customer,
-            created_at__gte=trust_mark.created_at
+            created_at__gte=feedback.created_at
         ).count()
         
         context = f"""
         Customer: {customer.email}
-        Account age: {(trust_mark.created_at - customer.created_at).days} days
+        Account age: {(feedback.created_at - customer.created_at).days} days
         Total trusts given: {recent_trusts}
         Email verified: {customer.is_email_verified}
-        Review text: "{trust_mark.review_text or 'N/A'}"
-        Has verification proof: {trust_mark.is_verified}
-        Trust number for this service: {trust_mark.trust_number_for_customer}
+        Feedback text: "{feedback.text or 'N/A'}"
+        Has verification proof: {feedback.is_verified}
         """
         
         prompt = f"""

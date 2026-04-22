@@ -47,17 +47,3 @@ def customer_profile(request):
     }
     
     return render(request, 'customer/profile.html', context)
-
-
-@login_required
-def customer_saved_contractors(request):
-    """View saved/favorite contractors"""
-    if request.user.user_type != 'customer':
-        messages.error(request, 'Access denied. Customer account required.')
-        return redirect('home')
-    
-    context = {
-        'user': request.user,
-    }
-    
-    return render(request, 'customer/saved_contractors.html', context)

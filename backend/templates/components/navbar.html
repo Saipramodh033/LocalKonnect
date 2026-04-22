@@ -43,13 +43,9 @@
                            class="text-gray-700 hover:text-primary transition-colors">
                             <i class="fas fa-dashboard mr-1"></i> Dashboard
                         </a>
-                        <a href="{% url 'trust:my_trust_marks' %}" 
+                        <a href="{% url 'trust:my_feedback' %}" 
                            class="text-gray-700 hover:text-primary transition-colors">
-                            <i class="fas fa-handshake mr-1"></i> My Trust Marks
-                        </a>
-                        <a href="{% url 'customer:saved_contractors' %}" 
-                           class="text-gray-700 hover:text-primary transition-colors">
-                            <i class="fas fa-heart mr-1"></i> Saved Contractors
+                            <i class="fas fa-star mr-1"></i> My Feedback
                         </a>
                     {% endif %}
                     
@@ -145,13 +141,9 @@
                        class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
                         <i class="fas fa-dashboard mr-2"></i> Dashboard
                     </a>
-                    <a href="{% url 'trust:my_trust_marks' %}" 
+                    <a href="{% url 'trust:my_feedback' %}" 
                        class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
-                        <i class="fas fa-handshake mr-2"></i> My Trust Marks
-                    </a>
-                    <a href="{% url 'customer:saved_contractors' %}" 
-                       class="block text-gray-700 hover:bg-gray-100 px-4 py-2 rounded">
-                        <i class="fas fa-heart mr-2"></i> Saved Contractors
+                        <i class="fas fa-star mr-2"></i> My Feedback
                     </a>
                 {% endif %}
                 <hr class="my-2">

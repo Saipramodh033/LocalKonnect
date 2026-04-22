@@ -165,10 +165,6 @@ class ContractorService(models.Model):
         ordering = ['-trust_score', '-created_at']
         indexes = [
             models.Index(fields=['contractor', 'category']),
-            models.Index(fields=['trust_score']),
-        ]
-        indexes = [
-            models.Index(fields=['contractor', 'category']),
             models.Index(fields=['category', '-trust_score']),
             models.Index(fields=['is_active', '-trust_score']),
         ]

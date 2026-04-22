@@ -66,8 +66,11 @@
                     <input type="text" 
                            name="location" 
                            value="{{ location }}"
-                           placeholder="City or postal code"
+                           placeholder="Latitude,Longitude (e.g. 40.7128,-74.0060)"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="useCurrentLocation()" class="mt-2 text-xs text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-location-arrow mr-1"></i>Use my current location
+                    </button>
                 </div>
                 
                 <!-- Search Button -->
@@ -133,9 +136,18 @@
     </div>
     
     <!-- Results Count -->
+    {% if location_invalid %}
+    <div class="mb-4">
+        <p class="text-xs text-red-600">Location format is invalid. Please use latitude,longitude.</p>
+    </div>
+    {% endif %}
+
     {% if contractors %}
     <div class="mb-4">
         <p class="text-gray-600">Found <strong>{{ total_results }}</strong> result{{ total_results|pluralize }}</p>
+        {% if using_profile_location %}
+        <p class="text-xs text-gray-500 mt-1">Using your saved profile location for distance filtering.</p>
+        {% endif %}
     </div>
     {% endif %}
     
@@ -208,6 +220,9 @@ function initMap() {
                     </span>
                     {% endif %}
                 </div>
+                {% if service.distance_km is not None %}
+                <p class="text-xs text-gray-500 mb-2">Distance: {{ service.distance_km|floatformat:1 }} km</p>
+                {% endif %}
                 <a href="{% url 'search:contractor_detail' service.contractor.id %}" 
                    class="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
                     View Profile
@@ -225,6 +240,21 @@ function initMap() {
         map.fitBounds(markers.getBounds().pad(0.1));
     }
     {% endif %}
+}
+
+function useCurrentLocation() {
+    if (!navigator.geolocation) {
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude.toFixed(6);
+        const lng = position.coords.longitude.toFixed(6);
+        const locationInput = document.querySelector('input[name="location"]');
+        if (locationInput) {
+            locationInput.value = `${lat},${lng}`;
+        }
+    });
 }
 </script>
 {% endblock %}

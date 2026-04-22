@@ -1,0 +1,99 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Feedback - LocalKonnect{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">My Feedback</h1>
+            <p class="text-gray-600">Feedback you have submitted for contractor services</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500 text-sm">Total Feedback</p>
+                <p class="text-3xl font-bold text-blue-600 mt-1">{{ stats.total_feedback }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500 text-sm">Verified Feedback</p>
+                <p class="text-3xl font-bold text-green-600 mt-1">{{ stats.verified_feedback }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500 text-sm">Average Rating</p>
+                <p class="text-3xl font-bold text-purple-600 mt-1">{{ stats.average_rating }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b">
+                <h2 class="text-xl font-semibold">Feedback History</h2>
+            </div>
+
+            {% if feedback_entries %}
+                <div class="divide-y">
+                    {% for feedback in feedback_entries %}
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <a href="{% url 'search:contractor_detail' contractor_id=feedback.contractor_service.contractor.id %}"
+                                       class="text-lg font-semibold text-gray-800 hover:text-blue-600">
+                                        {{ feedback.contractor_service.contractor.business_name|default:feedback.contractor_service.contractor.user.get_full_name }}
+                                    </a>
+                                    {% if feedback.is_verified %}
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                        <i class="fas fa-check-circle mr-1"></i>Verified
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <p class="text-gray-600 mb-2">
+                                    <i class="fas fa-briefcase mr-1"></i>{{ feedback.contractor_service.title }}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-tag mr-1"></i>{{ feedback.contractor_service.category.name }}
+                                </p>
+
+                                <p class="text-yellow-500 mb-2">
+                                    {% for _ in "12345" %}
+                                        {% if forloop.counter <= feedback.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+
+                                {% if feedback.text %}
+                                <p class="text-gray-700 mb-2">{{ feedback.text }}</p>
+                                {% endif %}
+
+                                <p class="text-sm text-gray-500">
+                                    <i class="fas fa-clock mr-1"></i>Updated {{ feedback.updated_at|date:"M d, Y" }}
+                                </p>
+                            </div>
+
+                            <a href="{% url 'trust:submit_feedback' service_id=feedback.contractor_service.id %}"
+                               class="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                Edit
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-12 text-center">
+                    <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Feedback Yet</h3>
+                    <p class="text-gray-500 mb-4">Search contractors and submit your first feedback.</p>
+                    <a href="{% url 'search:results' %}"
+                       class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i>Find Contractors
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
