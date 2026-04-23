@@ -4,7 +4,7 @@ A robust, lean Django-based web platform connecting customers with reliable loca
 
 ## 🎯 Project Overview
 
-LocalKonnect helps customers find trustworthy local contractors while providing contractors a platform to showcase their services and build their reputation through customer feedback and trust scores. The platform was recently refactored to focus on a highly stable, synchronous core flow: **Customer → Search → Contractor Detail → Submit Feedback → Trust Score Updates → Reflected in Search.**
+LocalKonnect helps customers find trustworthy local contractors while providing contractors a platform to showcase their services and build their reputation through customer feedback and trust scores. The platform was recently refactored to focus on a highly stable, synchronous core flow: **Customer -> Search -> Contractor Detail -> Submit Feedback -> Trust Score Updates -> Reflected in Search.**
 
 ## ✨ Core Features
 

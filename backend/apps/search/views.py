@@ -148,6 +148,8 @@ def search_results(request):
     return render(request, 'search/search.html', context)
 
 
+from django.core.paginator import Paginator
+
 def contractor_detail(request, contractor_id):
     """Contractor detail page"""
     contractor = get_object_or_404(
@@ -171,10 +173,46 @@ def contractor_detail(request, contractor_id):
         }
         for service in services:
             service.current_user_feedback = feedback_map.get(str(service.id))
+            
+    # -- Reviews Section Logic --
+    verified_only = request.GET.get('verified') == 'true'
+    has_proof = request.GET.get('has_proof') == 'true'
+    filter_service_id = request.GET.get('service_id')
+
+    feedbacks_qs = Feedback.objects.filter(
+        contractor_service__contractor=contractor
+    ).select_related('customer', 'contractor_service')
+
+    if verified_only:
+        feedbacks_qs = feedbacks_qs.filter(is_verified=True)
+    
+    if has_proof:
+        feedbacks_qs = feedbacks_qs.filter(verification_proof__isnull=False).exclude(verification_proof='')
+        
+    if filter_service_id:
+        feedbacks_qs = feedbacks_qs.filter(contractor_service_id=filter_service_id)
+
+    feedbacks_qs = feedbacks_qs.order_by('-created_at')
+
+    paginator = Paginator(feedbacks_qs, 10)
+    page_number = request.GET.get('page')
+    feedbacks_page = paginator.get_page(page_number)
+
+    # Reconstruct query string for pagination links
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
     
     context = {
         'contractor': contractor,
         'services': services,
+        'feedbacks': feedbacks_page,
+        'current_filters': {
+            'verified': verified_only,
+            'has_proof': has_proof,
+            'service_id': filter_service_id,
+        },
+        'query_string': query_params.urlencode()
     }
     
     return render(request, 'search/contractor_detail.html', context)
