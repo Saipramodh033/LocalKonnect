@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load socialaccount %}
 
 {% block title %}Login - LocalKonnect{% endblock %}
 
@@ -91,6 +92,21 @@
                             class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                         Log In
                     </button>
+
+                    <div class="mt-4 text-center">
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                            </div>
+                        </div>
+                        <a href="{% provider_login_url 'google' %}" class="mt-4 w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <img class="h-5 w-5 mr-2" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo">
+                            Google
+                        </a>
+                    </div>
                 </div>
             </form>
             
@@ -106,6 +122,7 @@
 <script>
 function selectUserType(type) {
     document.getElementById('expected_user_type').value = type;
+    document.cookie = "expected_user_type=" + type + "; path=/";
     document.getElementById('user-type-selection').style.display = 'none';
     document.getElementById('login-form').style.display = 'block';
     

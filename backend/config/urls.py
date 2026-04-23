@@ -30,6 +30,9 @@ urlpatterns = [
     path('contractor/', include('apps.contractors.urls')),  # Contractor dashboard/CRUD
     path('customer/', include('apps.customer.urls')),    # Customer dashboard/profile
     path('trust/', include('apps.trust.urls')),          # Feedback submission
+    
+    # Allauth
+    path('accounts/', include('allauth.urls')),
 ]
 
 # Serve media files in development
