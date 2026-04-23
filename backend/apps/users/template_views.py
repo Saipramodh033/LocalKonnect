@@ -205,17 +205,3 @@ def change_password_view(request):
     messages.success(request, 'Password changed successfully!')
     return redirect('users:settings')
 
-
-@login_required
-@require_http_methods(["POST"])
-def update_notifications_view(request):
-    """Update notification preferences"""
-    # This would update user preferences in a UserPreferences model
-    # For now, just show success message
-    messages.success(request, 'Notification preferences updated successfully!')
-    return redirect('users:settings')
-
-
-def password_reset_view(request):
-    """Password reset view"""
-    return render(request, 'auth/password_reset.html')

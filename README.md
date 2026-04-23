@@ -12,6 +12,7 @@ LocalKonnect helps customers find trustworthy local contractors while providing 
 - ✅ Custom user model with role-based access (Customer / Contractor)
 - ✅ Standard session-based authentication
 - ✅ User profile management with exact geographical coordinates (PostGIS Point field)
+- ✅ Built-in password reset functionality (utilizing Django's secure token system and console email backend)
 
 ### Contractor Features
 - ✅ Auto-created contractor profiles via Django signals
@@ -29,6 +30,7 @@ LocalKonnect helps customers find trustworthy local contractors while providing 
 - ✅ 1-5 star rating system with verified feedback bonuses
 - ✅ Dynamic trust score algorithm combining rating, verified status, and contractor experience
 - ✅ Trust score instantly updates and reflects in search rankings upon feedback submission
+- ✅ Public contractor profiles display aggregated, filterable, and paginated review histories
 
 ### Geospatial Search
 - ✅ PostGIS-powered distance-based search
