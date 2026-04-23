@@ -178,10 +178,33 @@ def contractor_detail(request, contractor_id):
     verified_only = request.GET.get('verified') == 'true'
     has_proof = request.GET.get('has_proof') == 'true'
     filter_service_id = request.GET.get('service_id')
+    local_only = request.GET.get('local') == 'true'
 
     feedbacks_qs = Feedback.objects.filter(
         contractor_service__contractor=contractor
     ).select_related('customer', 'contractor_service')
+
+    has_local_reviews = False
+    
+    from django.contrib.gis.measure import D
+    from django.db.models import Case, When, BooleanField, Value
+
+    if request.user.is_authenticated and getattr(request.user, 'location', None):
+        feedbacks_qs = feedbacks_qs.annotate(
+            is_local=Case(
+                When(customer__location__distance_lte=(request.user.location, D(km=25)), then=True),
+                default=False,
+                output_field=BooleanField()
+            )
+        )
+        has_local_reviews = feedbacks_qs.filter(is_local=True).exists()
+        
+        if local_only:
+            feedbacks_qs = feedbacks_qs.filter(is_local=True)
+    else:
+        feedbacks_qs = feedbacks_qs.annotate(
+            is_local=Value(False, output_field=BooleanField())
+        )
 
     if verified_only:
         feedbacks_qs = feedbacks_qs.filter(is_verified=True)
@@ -207,10 +230,12 @@ def contractor_detail(request, contractor_id):
         'contractor': contractor,
         'services': services,
         'feedbacks': feedbacks_page,
+        'has_local_reviews': has_local_reviews,
         'current_filters': {
             'verified': verified_only,
             'has_proof': has_proof,
             'service_id': filter_service_id,
+            'local': local_only,
         },
         'query_string': query_params.urlencode()
     }
