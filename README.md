@@ -1,70 +1,58 @@
 # LocalKonnect - Trusted Local Contractor Network
 
-A Django-based web platform connecting customers with reliable local contractors through a geospatial search and trust scoring system.
+A robust, lean Django-based web platform connecting customers with reliable local contractors through a geospatial search and an automated trust scoring system.
 
 ## 🎯 Project Overview
 
-LocalKonnect helps customers find trustworthy local contractors while providing contractors a platform to showcase their services and build reputation through customer reviews and trust marks.
+LocalKonnect helps customers find trustworthy local contractors while providing contractors a platform to showcase their services and build their reputation through customer feedback and trust scores. The platform was recently refactored to focus on a highly stable, synchronous core flow: **Customer → Search → Contractor Detail → Submit Feedback → Trust Score Updates → Reflected in Search.**
 
-## ✨ Implemented Features
+## ✨ Core Features
 
 ### User Management
-- ✅ Custom user model with role-based access (Customer/Contractor)
-- ✅ Session-based authentication (login/logout/register)
-- ✅ User profile management with location (PostGIS Point field)
-- ✅ Redis-backed rate limiting for login attempts
+- ✅ Custom user model with role-based access (Customer / Contractor)
+- ✅ Standard session-based authentication
+- ✅ User profile management with exact geographical coordinates (PostGIS Point field)
 
 ### Contractor Features
-- ✅ Contractor profile with business information
-- ✅ Office location with PostGIS Point field
-- ✅ Service radius configuration (km)
-- ✅ Auto-profile creation via Django signals
+- ✅ Auto-created contractor profiles via Django signals
+- ✅ Office location tracking with PostGIS `Point` field and `GIST` indexes
+- ✅ Service radius configuration
 - ✅ Verification status tracking
-- ✅ Dashboard with service statistics
 
 ### Service Management
-- ✅ Hierarchical service categories and subcategories
-- ✅ Contractor service CRUD (Create/Read/Update/Delete)
-- ✅ Per-service trust scores
-- ✅ Many-to-many subcategory relationships
-- ✅ Service portfolio management
+- ✅ Service categories and subcategories
+- ✅ Contractor service management
+- ✅ Per-service trust scores calculated automatically based on customer feedback
 
-### Trust & Review System
-- ✅ TrustMark model (unique per customer-service pair)
-- ✅ Review system linked to trust marks
-- ✅ Review helpfulness voting
-- ✅ Trust mark verification status
-- ✅ Fraud detection framework
+### Trust & Feedback System
+- ✅ Synchronous `Feedback` model ensuring absolute data integrity
+- ✅ 1-5 star rating system with verified feedback bonuses
+- ✅ Dynamic trust score algorithm combining rating, verified status, and contractor experience
+- ✅ Trust score instantly updates and reflects in search rankings upon feedback submission
 
 ### Geospatial Search
 - ✅ PostGIS-powered distance-based search
-- ✅ Filter by category, subcategory, trust score
-- ✅ Radius search (within X km of location)
-- ✅ Results ordered by trust score and distance
-- ✅ Redis caching for search performance
+- ✅ Filter contractors by category and location
+- ✅ Radius search to match customers with nearby contractors
+- ✅ Results deterministically ordered by trust score and distance
 
 ### Infrastructure
-- ✅ Docker Compose setup (backend + PostgreSQL + Redis)
+- ✅ Docker Compose local setup
 - ✅ PostgreSQL 15 with PostGIS 3.3
-- ✅ Redis for caching and session storage
-- ✅ Django admin interface
-- ✅ Migration management
-- ✅ GIST index on contractor locations
+- ✅ Native Django management commands for nightly maintenance tasks (e.g., `python manage.py recompute_trust_scores`)
+- ✅ Lean, server-rendered frontend using Django Templates, Tailwind CSS (CDN), and Alpine.js
 
 ## 🛠️ Tech Stack
 
 ### Backend
-- **Django 4.2.8** - Web framework
-- **PostgreSQL 15 + PostGIS 3.3** - Database with geospatial support
-- **Redis 7** - Caching layer
-- **Django Redis** - Cache backend
-- **Python 3.11** - Runtime
+- **Django 4.2.8** - Core web framework
+- **PostgreSQL 15 + PostGIS 3.3** - Primary database with robust geospatial support
 
 ### Frontend (Server-Rendered)
 - **Django Templates** - Template engine
-- **Tailwind CSS** (CDN) - Styling
-- **Alpine.js** - Reactive components
-- **Vanilla JavaScript** - Map integration and UI
+- **Tailwind CSS** (CDN) - Utility-first styling
+- **Alpine.js** - Lightweight reactive components
+- **Vanilla JavaScript** - Map integration (Leaflet.js) and UI logic
 
 ### DevOps
 - **Docker & Docker Compose** - Containerization
@@ -85,34 +73,40 @@ git clone https://github.com/yourusername/LocalKonnect.git
 cd LocalKonnect
 ```
 
-2. **Create environment file:**
-```bash
-# Create .env in project root (optional, defaults work for dev)
-DATABASE_NAME=localkonnect_db
-DATABASE_USER=postgres
-DATABASE_PASSWORD=postgres
-REDIS_URL=redis://localkonnect_redis:6379/1
-```
-
-3. **Start the application:**
+2. **Start the application:**
 ```powershell
 docker compose up -d --build
 ```
 
-4. **Create the database and run migrations:**
+3. **Run database migrations:**
 ```powershell
-docker compose exec db psql -U postgres -c "CREATE DATABASE localkonnect_db;"
 docker compose exec backend python manage.py migrate
+```
+
+4. **Seed realistic demo data:**
+```powershell
+# Create categories first
+docker compose exec backend python manage.py create_categories
+
+# Seed 10 contractors, 10 customers, services, and feedback
+docker compose exec backend python manage.py seed_realistic_demo_data
 ```
 
 5. **Create a superuser (optional):**
 ```powershell
-docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py shell -c "
+from apps.users.models import User
+User.objects.create_superuser('admin', 'admin@localkonnect.com', 'Admin1234!', user_type='contractor')
+"
 ```
 
 6. **Access the application:**
 - **Web Application:** http://localhost:8000
 - **Admin Panel:** http://localhost:8000/admin
+
+*Demo Logins:*
+- Customer: `customer1@seed.localkonnect.test` / `SeedPass123!`
+- Contractor: `contractor1@seed.localkonnect.test` / `SeedPass123!`
 
 ### Stopping the Application
 ```powershell
@@ -129,186 +123,60 @@ docker compose logs backend -f
 ```
 LocalKonnect/
 ├── backend/
-│   ├── config/                    # Django project settings
-│   │   ├── settings.py           # Main configuration
-│   │   ├── urls.py               # Root URL routing
-│   │   └── celery.py             # Celery config (unused)
+│   ├── config/                    # Django project settings and root routing
 │   ├── apps/
 │   │   ├── users/                # User authentication & profiles
-│   │   │   ├── models.py         # Custom User model
-│   │   │   ├── template_views.py # Login/Register views
-│   │   │   ├── forms.py          # Auth forms
-│   │   │   └── signals.py        # User signals
-│   │   ├── contractors/          # Contractor profiles
-│   │   │   ├── models.py         # ContractorProfile
-│   │   │   ├── views.py          # Dashboard, CRUD
-│   │   │   ├── signals.py        # Auto-create profile
-│   │   │   └── utils.py          # Profile guards
-│   │   ├── services/             # Service management
-│   │   │   ├── models.py         # Category, Service models
-│   │   │   └── admin.py          # Admin interface
-│   │   ├── trust/                # Trust & review system
-│   │   │   ├── models.py         # TrustMark, Review
-│   │   │   ├── views.py          # Trust CRUD
-│   │   │   └── fraud_detection.py
-│   │   ├── search/               # Geospatial search
-│   │   │   ├── views.py          # Distance search
-│   │   │   └── forms.py          # Search filters
-│   │   ├── customer/             # Customer features (minimal)
-│   │   ├── admin_panel/          # Admin tools (minimal)
-│   │   └── ai/                   # AI integration (unused)
-│   ├── templates/                # Django templates
-│   │   ├── base/                 # Base & home
-│   │   ├── auth/                 # Login/register
-│   │   ├── contractor/           # Contractor views
-│   │   ├── customer/             # Customer views
-│   │   ├── search/               # Search results
-│   │   └── trust/                # Trust forms
-│   ├── static/                   # Static assets
-│   │   ├── css/custom.css
-│   │   └── js/                   # UI scripts
+│   │   ├── contractors/          # Contractor profiles and signals
+│   │   ├── services/             # Service categories and ContractorService models
+│   │   ├── trust/                # Feedback models, trust score utilities, and submission logic
+│   │   ├── search/               # Geospatial search views and Contractor detail views
+│   │   └── customer/             # Minimal customer dashboards
+│   ├── templates/                # Django templates (Base, Auth, Contractor, Customer, Search, Trust)
+│   ├── static/                   # Static assets (CSS, JS, Images)
 │   ├── requirements.txt          # Python dependencies
-│   ├── Dockerfile                # Backend container
+│   ├── Dockerfile                # Backend container configuration
 │   └── manage.py                 # Django CLI
-├── docker-compose.yml            # Multi-container orchestration
+├── docker-compose.yml            # Multi-container orchestration (DB and Backend)
 └── README.md                     # This file
 ```
 
-## 🗄️ Database Schema
+## 🗄️ Database Schema (Core Models)
 
-### Core Models
-
-**User** (Custom)
-- email (unique)
-- username
-- user_type (customer/contractor)
-- location (PostGIS Point)
-- reviewer_weight
+**User**
+- Custom authentication model extending `AbstractUser`
+- Handles `user_type` (Customer/Contractor) and PostGIS `location`.
 
 **ContractorProfile**
-- user (OneToOne → User)
-- office_location (PostGIS Point with GIST index)
-- office_address
-- service_radius_km
-- business_name
-- verification_status
-- years_in_business
+- One-to-one with `User`.
+- Stores `office_location` (PostGIS Point), `service_radius_km`, and business details.
 
 **ServiceCategory & ServiceSubcategory**
-- Hierarchical taxonomy
-- is_active flag
+- Hierarchical taxonomy for the services offered on the platform.
 
 **ContractorService**
-- contractor (FK → ContractorProfile)
-- category (FK → ServiceCategory)
-- subcategories (M2M → ServiceSubcategory)
-- title, description
-- trust_score (calculated)
-- pricing_model
+- The core offering linking a Contractor to a ServiceCategory.
+- Stores the calculated `trust_score` which is deterministically updated when feedback is given.
 
-**TrustMark**
-- customer (FK → User)
-- service (FK → ContractorService)
-- trust_level (1-5)
-- status (pending/verified/flagged)
-- Unique constraint: (customer, service)
-
-**Review**
-- trust_mark (OneToOne → TrustMark)
-- rating, title, description
-- is_verified
-
-**ReviewHelpfulness**
-- review (FK → Review)
-- customer (FK → User)
-- is_helpful (boolean)
-
-## 🔧 Configuration
-
-### Django Settings
-- Session-based authentication (no JWT)
-- Redis cache backend (`django-redis`)
-- PostGIS database backend
-- Cache timeout: 60s (search), 120s (detail pages)
-
-### Docker Services
-- **backend**: Django app on port 8000
-- **db**: PostgreSQL 15 + PostGIS 3.3 on port 5432
-- **redis**: Redis 7 on port 6379
-
-### Environment Variables
-```env
-# Database
-DATABASE_NAME=localkonnect_db
-DATABASE_USER=postgres
-DATABASE_PASSWORD=postgres
-DATABASE_HOST=db
-
-# Redis
-REDIS_URL=redis://localkonnect_redis:6379/1
-
-# Django
-SECRET_KEY=<auto-generated>
-DEBUG=True
-```
-
-## 🧪 Development & Testing
-
-### Running Tests
-```powershell
-# Run all Django tests
-docker compose exec backend python manage.py test
-
-# Run specific app tests
-docker compose exec backend python manage.py test apps.users
-docker compose exec backend python manage.py test apps.contractors
-docker compose exec backend python manage.py test apps.trust
-
-# Check for issues
-docker compose exec backend python manage.py check
-```
-
-### Database Management
-```powershell
-# Create new migrations
-docker compose exec backend python manage.py makemigrations
-
-# Apply migrations
-docker compose exec backend python manage.py migrate
-
-# Access Django shell
-docker compose exec backend python manage.py shell
-
-# Access PostgreSQL
-docker compose exec db psql -U postgres -d localkonnect_db
-```
-
-### Viewing Application URLs
-```powershell
-docker compose exec backend python manage.py show_urls
-```
+**Feedback**
+- Links a `Customer` to a `ContractorService`.
+- Stores `rating` (1-5), optional text, and `is_verified` status.
+- Triggers synchronous trust score recalculation on save.
 
 ## 📚 Key Features Explained
 
-### Geospatial Search
-LocalKonnect uses PostGIS for powerful location-based queries. The system can:
-- Find contractors within a specified radius
-- Calculate distances between locations
-- Optimize searches using GIST spatial indexes
-- Cache frequent search results for better performance
+### The Trust Score Algorithm
+When a customer leaves feedback for a service, the system immediately recalculates the `ContractorService` trust score. The algorithm factors in:
+1. **Raw Rating:** The 1-5 star value.
+2. **Verification Bonus:** Feedback marked as `is_verified` (e.g. proof of work provided) is weighted significantly heavier.
+3. **Reviewer Weight:** Feedback from trusted customers contributes more to the score.
+4. **Experience Bonus:** Contractors receive a slight bump based on their `years_of_experience`.
+5. **Bayesian Smoothing:** Prevents new services with a single 5-star review from instantly outranking established services with hundreds of solid 4.8-star reviews.
 
-### Trust System
-The platform implements a comprehensive trust and reputation system:
-- Customers can mark services they trust
-- Each trust mark is unique per customer-service pair
-- Reviews are linked to trust marks for authenticity
-- Community-driven review helpfulness voting
-
-### Security Features
-- Session-based authentication with secure cookies
-- Redis-backed rate limiting to prevent abuse
-- CSRF protection on all forms
-- Role-based access control for contractor features
+### Geospatial Discovery
+LocalKonnect utilizes PostgreSQL's PostGIS extension to handle all location data. When a customer searches:
+- It calculates the exact distance between the customer's coordinate and the contractor's office coordinate.
+- It filters out contractors if the customer falls outside their configured `service_radius_km`.
+- Search queries utilize `GIST` indexes for highly optimized geographical sorting.
 
 ## 🤝 Contributing
 
@@ -320,57 +188,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-
-A full-stack Django application demonstrating:
-- Advanced geospatial features with PostGIS
-- Scalable caching strategies with Redis
-- Modern Docker-based deployment
-- Trust and reputation system architecture
-- Clean, maintainable code structure
-
 ---
 
 **Version:** 1.0.0
-```bash
-# Backend linting
-cd backend
-flake8 .
-black .
-
-# Frontend linting
-cd frontend
-npm run lint
-npm run format
-```
-
-## Deployment
-
-### Docker Deployment
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### Manual Deployment
-1. Set up PostgreSQL with PostGIS extension
-2. Configure environment variables for production
-3. Collect static files: `python manage.py collectstatic`
-4. Run migrations: `python manage.py migrate`
-5. Start Gunicorn: `gunicorn config.wsgi:application`
-6. Start Celery workers and beat scheduler
-7. Build frontend: `npm run build`
-8. Serve with Nginx
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## Acknowledgments
-
-- Google Gemini AI for intelligent features
-- PostGIS for geospatial capabilities
-- The Django and React communities

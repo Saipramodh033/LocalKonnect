@@ -8,8 +8,6 @@ Creates:
 - Contractor services tied to categories/subcategories
 - Feedback from customers to services
 - Trust score history via trust score recalculation
-- Contractor analytics
-- User activity logs
 
 The command is rerunnable. It removes prior seed users by domain before recreating data.
 """
@@ -22,11 +20,11 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.contractors.models import ContractorAnalytics, ContractorProfile
+from apps.contractors.models import ContractorProfile
 from apps.services.models import ContractorService, ServiceCategory, ServiceSubcategory
 from apps.trust.models import Feedback
 from apps.trust.utils import update_service_trust_score
-from apps.users.models import User, UserActivity
+from apps.users.models import User
 
 
 class Command(BaseCommand):
@@ -50,16 +48,12 @@ class Command(BaseCommand):
 
         feedback_count = self._create_feedback(customers, services, now)
         self._recalculate_scores(services)
-        analytics_rows = self._create_contractor_analytics(contractors, now)
-        activity_rows = self._create_user_activities(contractors, customers, now)
 
         self.stdout.write(self.style.SUCCESS("Seed completed successfully."))
         self.stdout.write(f"Contractors created: {len(contractors)}")
         self.stdout.write(f"Customers created: {len(customers)}")
         self.stdout.write(f"Services created: {len(services)}")
         self.stdout.write(f"Feedback created: {feedback_count}")
-        self.stdout.write(f"Contractor analytics rows created: {analytics_rows}")
-        self.stdout.write(f"User activity rows created: {activity_rows}")
 
     def _ensure_categories_and_subcategories(self):
         categories_data = [
@@ -114,30 +108,8 @@ class Command(BaseCommand):
         return categories
 
     def _create_contractors(self, now):
-        first_names = [
-            "Aarav",
-            "Mason",
-            "Sophia",
-            "Liam",
-            "Noah",
-            "Olivia",
-            "Ethan",
-            "Ava",
-            "Lucas",
-            "Mia",
-        ]
-        last_names = [
-            "Patel",
-            "Turner",
-            "Reed",
-            "Bennett",
-            "Foster",
-            "Rivera",
-            "Cooper",
-            "Hughes",
-            "Ward",
-            "Brooks",
-        ]
+        first_names = ["Aarav", "Mason", "Sophia", "Liam", "Noah", "Olivia", "Ethan", "Ava", "Lucas", "Mia"]
+        last_names = ["Patel", "Turner", "Reed", "Bennett", "Foster", "Rivera", "Cooper", "Hughes", "Ward", "Brooks"]
         businesses = [
             "NorthStar Home Services",
             "BlueLine Electrical",
@@ -162,7 +134,6 @@ class Command(BaseCommand):
             "520 Atlantic Ave, Brooklyn, NY 11217",
             "96 Court St, Brooklyn, NY 11201",
         ]
-        # (lat, lng)
         coords = [
             (40.7505, -73.9934),
             (40.7196, -74.0018),
@@ -219,31 +190,8 @@ class Command(BaseCommand):
         return contractors
 
     def _create_customers(self, now):
-        first_names = [
-            "Emma",
-            "James",
-            "Amelia",
-            "Benjamin",
-            "Charlotte",
-            "Elijah",
-            "Harper",
-            "Henry",
-            "Evelyn",
-            "Alexander",
-        ]
-        last_names = [
-            "Miller",
-            "Davis",
-            "Wilson",
-            "Moore",
-            "Taylor",
-            "Anderson",
-            "Thomas",
-            "Jackson",
-            "White",
-            "Harris",
-        ]
-        # (lat, lng)
+        first_names = ["Emma", "James", "Amelia", "Benjamin", "Charlotte", "Elijah", "Harper", "Henry", "Evelyn", "Alexander"]
+        last_names = ["Miller", "Davis", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris"]
         coords = [
             (40.7484, -73.9857),
             (40.7306, -73.9866),
@@ -329,7 +277,6 @@ class Command(BaseCommand):
     def _create_feedback(self, customers, services, now):
         feedback_created = 0
 
-        # Each customer gives feedback to 3 unique services.
         for customer_idx, customer in enumerate(customers):
             picked_services = random.sample(services, k=3)
 
@@ -355,77 +302,3 @@ class Command(BaseCommand):
     def _recalculate_scores(self, services):
         for service in services:
             update_service_trust_score(service)
-
-    def _create_contractor_analytics(self, contractors, now):
-        rows_created = 0
-
-        for contractor in contractors:
-            for day in range(7):
-                date_value = (now - timedelta(days=day)).date()
-                average_score = contractor.get_overall_trust_score()
-                trust_count = Feedback.objects.filter(
-                    contractor_service__contractor=contractor,
-                    created_at__date=date_value,
-                ).count()
-
-                ContractorAnalytics.objects.create(
-                    contractor=contractor,
-                    date=date_value,
-                    profile_views=random.randint(5, 120),
-                    search_appearances=random.randint(8, 200),
-                    contact_clicks=random.randint(0, 40),
-                    trust_marks_received=trust_count,
-                    average_trust_score=average_score,
-                    local_rank=random.randint(1, 30),
-                    category_rank=random.randint(1, 20),
-                )
-                rows_created += 1
-
-        return rows_created
-
-    def _create_user_activities(self, contractors, customers, now):
-        rows_created = 0
-
-        for idx, contractor in enumerate(contractors):
-            UserActivity.objects.create(
-                user=contractor.user,
-                activity_type="login",
-                ip_address=f"172.16.1.{idx + 10}",
-                user_agent="Chrome/Seed",
-                metadata={"source": "seed-script", "device": "web"},
-                created_at=now - timedelta(hours=idx + 2),
-            )
-            rows_created += 1
-
-            UserActivity.objects.create(
-                user=contractor.user,
-                activity_type="profile_update",
-                ip_address=f"172.16.1.{idx + 30}",
-                user_agent="Chrome/Seed",
-                metadata={"source": "seed-script", "field": "business_profile"},
-                created_at=now - timedelta(hours=idx + 1),
-            )
-            rows_created += 1
-
-        for idx, customer in enumerate(customers):
-            UserActivity.objects.create(
-                user=customer,
-                activity_type="login",
-                ip_address=f"172.16.2.{idx + 10}",
-                user_agent="Firefox/Seed",
-                metadata={"source": "seed-script", "device": "web"},
-                created_at=now - timedelta(hours=idx + 1),
-            )
-            rows_created += 1
-
-            UserActivity.objects.create(
-                user=customer,
-                activity_type="trust_mark",
-                ip_address=f"172.16.2.{idx + 30}",
-                user_agent="Firefox/Seed",
-                metadata={"source": "seed-script", "count": 3},
-                created_at=now - timedelta(hours=idx),
-            )
-            rows_created += 1
-
-        return rows_created

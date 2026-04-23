@@ -131,8 +131,8 @@ class ContractorService(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
         help_text="Calculated trust score (0-100)"
     )
-    total_trust_marks = models.IntegerField(default=0)
-    verified_trust_marks = models.IntegerField(default=0)
+    total_feedbacks = models.IntegerField(default=0)
+    verified_feedbacks = models.IntegerField(default=0)
     trust_score_last_calculated = models.DateTimeField(null=True, blank=True)
     
     # Portfolio

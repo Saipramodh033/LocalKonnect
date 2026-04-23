@@ -30,39 +30,47 @@ def submit_feedback(request, service_id):
     ).first()
 
     if request.method == 'POST':
+        # Validate rating BEFORE touching the database
+        rating_raw = request.POST.get('rating', '').strip()
         try:
-            rating_raw = request.POST.get('rating', '')
             rating = int(rating_raw)
             if rating < 1 or rating > 5:
                 raise ValueError('Rating must be between 1 and 5')
+        except (ValueError, TypeError):
+            messages.error(request, 'Please select a star rating (1–5) before submitting.')
+        else:
+            try:
+                feedback, created = Feedback.objects.get_or_create(
+                    customer=request.user,
+                    contractor_service=service,
+                    defaults={'rating': rating}
+                )
 
-            feedback, _ = Feedback.objects.get_or_create(
-                customer=request.user,
-                contractor_service=service,
-            )
+                feedback.rating = rating
+                feedback.text = request.POST.get('text', '').strip() or None
+                feedback.is_verified = request.POST.get('is_verified') == 'on'
+                feedback.ip_address = get_client_ip(request)
+                feedback.user_agent = request.META.get('HTTP_USER_AGENT', '')
+                if 'verification_proof' in request.FILES:
+                    feedback.verification_proof = request.FILES['verification_proof']
+                    feedback.is_verified = True
+                feedback.save()
 
-            feedback.rating = rating
-            feedback.text = request.POST.get('text', '').strip() or None
-            feedback.is_verified = request.POST.get('is_verified') == 'on'
-            feedback.ip_address = get_client_ip(request)
-            feedback.user_agent = request.META.get('HTTP_USER_AGENT', '')
-            if 'verification_proof' in request.FILES:
-                feedback.verification_proof = request.FILES['verification_proof']
-                feedback.is_verified = True
-            feedback.save()
+                service.refresh_from_db(fields=['trust_score'])
+                messages.success(request, f'Feedback saved. Updated trust score: {service.trust_score:.1f}')
+                return redirect('search:contractor_detail', contractor_id=service.contractor.id)
 
-            service.refresh_from_db(fields=['trust_score'])
-            messages.success(request, f'Feedback saved. Updated trust score: {service.trust_score:.1f}')
-            return redirect('search:contractor_detail', contractor_id=service.contractor.id)
+            except Exception as e:
+                logger.error(f"Error saving feedback: {e}")
+                messages.error(request, f'Could not save feedback: {str(e)}')
 
-        except Exception as e:
-            logger.error(f"Error saving feedback: {e}")
-            messages.error(request, f'Could not save feedback: {str(e)}')
-
+    current_rating = str(feedback.rating) if feedback else '5'
     context = {
         'service': service,
         'contractor': service.contractor,
         'feedback': feedback,
+        'star_values': ['5', '4', '3', '2', '1'],
+        'current_rating': current_rating,
     }
 
     return render(request, 'trust/feedback_form.html', context)

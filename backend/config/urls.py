@@ -5,25 +5,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
 from django.http import JsonResponse
 from apps.users.template_views import home_view
-
-# Swagger/OpenAPI schema
-schema_view = get_schema_view(
-    openapi.Info(
-        title="LocalKonnect API",
-        default_version='v1',
-        description="API documentation for Trusted Local Contractor Network",
-        terms_of_service="https://www.localkonnect.com/terms/",
-        contact=openapi.Contact(email="api@localkonnect.com"),
-        license=openapi.License(name="MIT License"),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-)
 
 
 def health_check(request):
@@ -34,24 +17,19 @@ def health_check(request):
 urlpatterns = [
     # Homepage
     path('', home_view, name='home'),
-    
+
     # Admin
     path('admin/', admin.site.urls),
-    
+
     # Health check
     path('api/health/', health_check, name='health-check'),
-    
-    # API Documentation
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    
+
     # Web interface (template views)
-    path('', include('apps.users.template_urls')),  # Auth pages
-    path('search/', include('apps.search.urls')),  # Search pages
-    path('contractor/', include('apps.contractors.urls')),  # Contractor pages
-    path('customer/', include('apps.customer.urls')),  # Customer pages (to be created)
-    path('trust/', include('apps.trust.urls')),  # Trust system pages
+    path('', include('apps.users.template_urls')),      # Auth pages
+    path('search/', include('apps.search.urls')),        # Search + contractor detail
+    path('contractor/', include('apps.contractors.urls')),  # Contractor dashboard/CRUD
+    path('customer/', include('apps.customer.urls')),    # Customer dashboard/profile
+    path('trust/', include('apps.trust.urls')),          # Feedback submission
 ]
 
 # Serve media files in development

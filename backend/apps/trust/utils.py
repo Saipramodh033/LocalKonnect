@@ -178,13 +178,13 @@ def update_service_trust_score(contractor_service):
     result = calculate_service_trust_score(contractor_service)
 
     contractor_service.trust_score = result['final_score']
-    contractor_service.total_trust_marks = result['total_feedbacks']
-    contractor_service.verified_trust_marks = result['verified_feedbacks']
+    contractor_service.total_feedbacks = result['total_feedbacks']
+    contractor_service.verified_feedbacks = result['verified_feedbacks']
     contractor_service.trust_score_last_calculated = timezone.now()
     contractor_service.save(update_fields=[
         'trust_score',
-        'total_trust_marks',
-        'verified_trust_marks',
+        'total_feedbacks',
+        'verified_feedbacks',
         'trust_score_last_calculated'
     ])
 

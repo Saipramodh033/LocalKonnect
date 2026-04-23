@@ -3,6 +3,55 @@
 
 {% block title %}Submit Feedback - {{ contractor.business_name }} - LocalKonnect{% endblock %}
 
+{% block extra_head %}
+<style>
+/* ── Star Rating Widget ─────────────────────────────────────── */
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;   /* reverse so CSS sibling trick works */
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 2.5rem;
+    color: #d1d5db;           /* gray-300 */
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.1s ease;
+    line-height: 1;
+}
+
+/* Hover: colour this label AND all labels that come AFTER it in DOM
+   (which are the lower-numbered stars because of row-reverse) */
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #f59e0b;           /* amber-400 */
+    transform: scale(1.1);
+}
+
+/* Selected: colour the checked radio's label AND all labels after it */
+.star-rating input[type="radio"]:checked ~ label {
+    color: #f59e0b;
+}
+
+/* Keep selection visible on hover too */
+.star-rating input[type="radio"]:checked + label:hover,
+.star-rating input[type="radio"]:checked ~ label:hover {
+    color: #d97706;           /* amber-600 */
+}
+
+.star-rating-display {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 8px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto">
@@ -10,58 +59,115 @@
             <a href="{% url 'search:contractor_detail' contractor_id=contractor.id %}" class="text-blue-600 hover:text-blue-700 inline-block mb-3">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Contractor
             </a>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">{% if feedback %}Update{% else %}Submit{% endif %} Feedback</h1>
-            <p class="text-gray-600">{{ contractor.business_name }} - {{ service.title }}</p>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {% if feedback %}Update{% else %}Submit{% endif %} Feedback
+            </h1>
+            <p class="text-gray-600">{{ contractor.business_name }} &ndash; {{ service.title }}</p>
         </div>
 
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-lg border
+                {% if message.tags == 'error' %}bg-red-50 border-red-300 text-red-700
+                {% elif message.tags == 'success' %}bg-green-50 border-green-300 text-green-700
+                {% else %}bg-blue-50 border-blue-300 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="bg-white rounded-lg shadow p-6">
-            <form method="post" enctype="multipart/form-data" class="space-y-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6" id="feedbackForm">
                 {% csrf_token %}
 
+                <!-- ── Star Rating (pure CSS + radio inputs, no JS dependency) ── -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
-                    <div class="flex items-center gap-2" id="ratingStars">
-                        {% for i in "12345" %}
-                        <button type="button"
-                                onclick="setRating({{ forloop.counter }})"
-                                class="rating-star text-4xl text-gray-300 hover:text-yellow-400 transition-colors"
-                                data-rating="{{ forloop.counter }}">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Your Rating <span class="text-red-500">*</span>
+                    </label>
+
+                    <div class="star-rating" id="starRating" role="radiogroup" aria-label="Rating">
+                        {# star_values and current_rating passed from view #}
+                        {% for val in star_values %}
+                        <input
+                            type="radio"
+                            name="rating"
+                            id="star{{ val }}"
+                            value="{{ val }}"
+                            {% if val == current_rating %}checked{% endif %}
+                        >
+                        <label for="star{{ val }}" title="{{ val }} star{% if val != '1' %}s{% endif %}" aria-label="{{ val }} star{% if val != '1' %}s{% endif %}">
                             <i class="fas fa-star"></i>
-                        </button>
+                        </label>
                         {% endfor %}
                     </div>
-                    <input type="hidden" name="rating" id="rating" value="{{ feedback.rating|default:'5' }}" required>
+
+                    <p class="star-rating-display" id="ratingLabel">
+                        Selected: <strong id="ratingText">{{ current_rating }}</strong> / 5
+                    </p>
                 </div>
 
+                <!-- ── Feedback Text ── -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Feedback Text (Optional)</label>
-                    <textarea name="text" rows="5"
-                              placeholder="Share your experience with this service"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ feedback.text|default:'' }}</textarea>
+                    <label for="feedbackText" class="block text-sm font-medium text-gray-700 mb-2">
+                        Your Experience <span class="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    <textarea
+                        id="feedbackText"
+                        name="text"
+                        rows="5"
+                        placeholder="Describe what the contractor did well or could improve..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    >{{ feedback.text|default:'' }}</textarea>
                 </div>
 
-                <div class="flex items-center">
-                    <input type="checkbox"
-                           name="is_verified"
-                           id="is_verified"
-                           {% if feedback and feedback.is_verified %}checked{% endif %}
-                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                    <label for="is_verified" class="ml-2 text-sm text-gray-700">Mark as verified feedback</label>
+                <!-- ── Verified Checkbox ── -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <input
+                            type="checkbox"
+                            name="is_verified"
+                            id="is_verified"
+                            {% if feedback and feedback.is_verified %}checked{% endif %}
+                            class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        >
+                        <div>
+                            <label for="is_verified" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                I can verify this feedback
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Check this if you can provide proof of work (invoice, photo, receipt). Verified feedback carries more weight in trust scoring.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- ── Proof Upload ── -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Verification Proof (Optional)</label>
-                    <input type="file" name="verification_proof" accept="image/*,.pdf"
-                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                    <p class="text-xs text-gray-500 mt-1">Uploading proof automatically marks feedback as verified.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Verification Proof <span class="text-gray-400 font-normal">(Optional — auto-marks as verified)</span>
+                    </label>
+                    <input
+                        type="file"
+                        name="verification_proof"
+                        id="verification_proof"
+                        accept="image/*,.pdf"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    >
                 </div>
 
+                <!-- ── Actions ── -->
                 <div class="flex justify-end gap-3 pt-4 border-t">
                     <a href="{% url 'search:contractor_detail' contractor_id=contractor.id %}"
-                       class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">Cancel</a>
-                    <button type="submit"
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-paper-plane mr-2"></i>{% if feedback %}Update{% else %}Submit{% endif %} Feedback
+                       class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" id="submitBtn"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        {% if feedback %}Update{% else %}Submit{% endif %} Feedback
                     </button>
                 </div>
             </form>
@@ -70,23 +176,25 @@
 </div>
 
 <script>
-function setRating(rating) {
-    document.getElementById('rating').value = rating;
-    const stars = document.querySelectorAll('#ratingStars .rating-star');
-    stars.forEach((star, index) => {
-        if (index < rating) {
-            star.classList.remove('text-gray-300');
-            star.classList.add('text-yellow-400');
-        } else {
-            star.classList.remove('text-yellow-400');
-            star.classList.add('text-gray-300');
-        }
-    });
-}
+// Update the "Selected: X / 5" label when a radio changes.
+// This is purely cosmetic — the form value is already handled by the radio input.
+(function () {
+    var radios = document.querySelectorAll('input[name="rating"]');
+    var ratingText = document.getElementById('ratingText');
 
-document.addEventListener('DOMContentLoaded', function() {
-    const initialRating = parseInt(document.getElementById('rating').value, 10) || 5;
-    setRating(initialRating);
-});
+    function updateLabel() {
+        var checked = document.querySelector('input[name="rating"]:checked');
+        if (checked && ratingText) {
+            ratingText.textContent = checked.value;
+        }
+    }
+
+    radios.forEach(function (radio) {
+        radio.addEventListener('change', updateLabel);
+    });
+
+    // Set initial label on load
+    updateLabel();
+}());
 </script>
 {% endblock %}

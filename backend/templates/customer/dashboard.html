@@ -55,36 +55,54 @@
     <!-- Recent Activity -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
         <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div class="text-center py-8">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <p class="mt-2 text-gray-500">No recent activity</p>
-            <p class="text-sm text-gray-400">Start by searching for contractors</p>
-        </div>
+        {% if recent_feedback %}
+            <div class="divide-y">
+                {% for fb in recent_feedback %}
+                <div class="py-4 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-gray-800">
+                            {{ fb.contractor_service.contractor.business_name|default:fb.contractor_service.contractor.user.get_full_name }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            {{ fb.contractor_service.category.name }} &bull;
+                            Rating: {{ fb.rating }}/5
+                            {% if fb.is_verified %}<span class="ml-1 text-blue-600">(verified)</span>{% endif %}
+                        </p>
+                    </div>
+                    <span class="text-xs text-gray-400">{{ fb.updated_at|date:"M d, Y" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'trust:my_feedback' %}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View all feedback &rarr;</a>
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="mt-2 text-gray-500">No recent activity</p>
+                <p class="text-sm text-gray-400">Start by searching for contractors</p>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Popular Services -->
     <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold mb-4">Popular Services</h2>
+        <h2 class="text-xl font-semibold mb-4">Browse Services</h2>
+        {% if popular_categories %}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:border-blue-500 cursor-pointer transition">
-                <div class="text-3xl mb-2">🔧</div>
-                <p class="text-sm font-medium">Plumbing</p>
-            </div>
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:border-blue-500 cursor-pointer transition">
-                <div class="text-3xl mb-2">⚡</div>
-                <p class="text-sm font-medium">Electrical</p>
-            </div>
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:border-blue-500 cursor-pointer transition">
-                <div class="text-3xl mb-2">🏠</div>
-                <p class="text-sm font-medium">Renovation</p>
-            </div>
-            <div class="border border-gray-200 rounded-lg p-4 text-center hover:border-blue-500 cursor-pointer transition">
-                <div class="text-3xl mb-2">🎨</div>
-                <p class="text-sm font-medium">Painting</p>
-            </div>
+            {% for category in popular_categories %}
+            <a href="{% url 'search:results' %}?category={{ category.slug }}"
+               class="border border-gray-200 rounded-lg p-4 text-center hover:border-blue-500 hover:shadow transition">
+                <div class="text-3xl mb-2">{{ category.icon }}</div>
+                <p class="text-sm font-medium text-gray-700">{{ category.name }}</p>
+            </a>
+            {% endfor %}
         </div>
+        {% else %}
+        <p class="text-gray-500 text-sm">No service categories available yet.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

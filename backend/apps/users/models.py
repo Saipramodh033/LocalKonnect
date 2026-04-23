@@ -72,33 +72,4 @@ class User(AbstractUser):
         self.save()
 
 
-class UserActivity(models.Model):
-    """Track user activity for fraud detection"""
-    
-    ACTIVITY_TYPES = (
-        ('login', 'Login'),
-        ('trust_mark', 'Trust Mark Given'),
-        ('review', 'Review Submitted'),
-        ('profile_update', 'Profile Updated'),
-        ('suspicious', 'Suspicious Activity'),
-    )
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
-    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField(blank=True, null=True)
-    metadata = models.JSONField(default=dict, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'user_activities'
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', '-created_at']),
-            models.Index(fields=['activity_type', '-created_at']),
-            models.Index(fields=['ip_address', '-created_at']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.activity_type} at {self.created_at}"
+
