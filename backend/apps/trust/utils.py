@@ -19,19 +19,26 @@ logger = logging.getLogger(__name__)
 def calculate_feedback_contribution(feedback):
     """
     Calculate a single feedback contribution to overall trust score.
-    
+
     Args:
         feedback: Feedback instance
-    
+
     Returns:
         float: Contribution value
     """
-    reviewer_weight = 1.0 if feedback.customer.is_verified_reviewer else 0.6
+    # Use the stored reviewer_weight field; verified reviewers are capped at 1.0.
+    customer = feedback.customer
+    if customer.is_verified_reviewer:
+        reviewer_weight = 1.0
+    else:
+        reviewer_weight = float(customer.reviewer_weight)  # default 0.6
+
     alpha = settings.TRUST_VERIFIED_BONUS  # 0.5
     verified_bonus = 1 + (alpha if feedback.is_verified else 0)
     rating_factor = feedback.rating / 5.0
 
     return rating_factor * verified_bonus * reviewer_weight
+
 
 
 def calculate_experience_bonus(years_of_experience):

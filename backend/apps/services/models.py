@@ -182,9 +182,36 @@ class ContractorService(models.Model):
             return 'red'
     
     def trigger_trust_recalculation(self):
-        """Queue task to recalculate trust score"""
-        from apps.trust.tasks import recalculate_service_trust_score
-        recalculate_service_trust_score.delay(str(self.id))
+        """Recalculate and persist trust score synchronously.
+
+        The score is always updated in the same DB transaction as the feedback
+        save so it is immediately consistent.  A Celery task is dispatched
+        afterwards as a best-effort audit log writer — if the broker is
+        unavailable the score is still correct.
+        """
+        from apps.trust.utils import update_service_trust_score
+        import logging
+        _log = logging.getLogger(__name__)
+
+        # Always run synchronously first — score must never depend on Celery.
+        try:
+            update_service_trust_score(self)
+        except Exception as exc:
+            _log.error(
+                "Synchronous trust score update failed for service %s: %s",
+                self.id, exc, exc_info=True,
+            )
+            raise  # Re-raise so the caller (Feedback.save) knows it failed.
+
+        # Best-effort async dispatch for any additional worker-side processing.
+        try:
+            from apps.trust.tasks import recalculate_service_trust_score
+            recalculate_service_trust_score.delay(str(self.id))
+        except Exception as exc:
+            _log.warning(
+                "Celery dispatch skipped for service %s (broker unavailable?): %s",
+                self.id, exc,
+            )
 
 
 class ServicePortfolioItem(models.Model):

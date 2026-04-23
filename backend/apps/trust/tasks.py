@@ -14,10 +14,26 @@ logger = logging.getLogger(__name__)
 def recalculate_service_trust_score(service_id):
     """
     Recalculate trust score for a single contractor service.
-    Triggered when a new trust mark is added.
+
+    This task is dispatched as a best-effort secondary path after the
+    synchronous update in ContractorService.trigger_trust_recalculation().
+    A recency guard prevents a redundant write when the sync path already
+    ran within the last 10 seconds.
     """
     try:
         service = ContractorService.objects.get(id=service_id)
+
+        # Skip if the synchronous path already ran very recently.
+        if service.trust_score_last_calculated is not None:
+            from django.utils import timezone
+            age_seconds = (timezone.now() - service.trust_score_last_calculated).total_seconds()
+            if age_seconds < 10:
+                logger.info(
+                    "Skipping async trust recalc for %s — score updated %ss ago",
+                    service_id, int(age_seconds),
+                )
+                return {"skipped": True, "reason": "recent_sync_update"}
+
         result = update_service_trust_score(service)
         logger.info(f"Updated trust score for {service}: {result['final_score']}")
         return result

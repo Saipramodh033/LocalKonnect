@@ -2,6 +2,8 @@
 Views for contractor dashboard and pages
 """
 
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .utils import require_contractor_profile
@@ -11,6 +13,8 @@ from django.http import JsonResponse
 from apps.contractors.models import ContractorProfile
 from apps.services.models import ContractorService, ServiceSubcategory
 from .forms import ContractorProfileForm, ContractorServiceForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required

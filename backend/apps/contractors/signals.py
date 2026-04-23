@@ -21,7 +21,10 @@ def create_contractor_profile(sender, instance: User, created: bool, **kwargs):
                 user=instance,
                 defaults={
                     'office_address': 'Not set',
-                    'office_location': Point(0, 0, srid=4326)
+                    'office_location': Point(0, 0, srid=4326),
+                    # Prevent appearing in search until the contractor sets a
+                    # real office location and explicitly opens for business.
+                    'is_accepting_jobs': False,
                 }
             )
             logger.info(f"ContractorProfile created for user {instance.email}")

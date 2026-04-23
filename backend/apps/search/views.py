@@ -111,8 +111,9 @@ def search_results(request):
             distance_km=Value(None, output_field=FloatField())
         ).order_by('-trust_score', '-created_at')
 
+    total_results = services.distinct().count()
     services = services.distinct()[:50]
-    
+
     # Prepare contractors data for map
     contractors_data = []
     for service in services:
@@ -127,17 +128,18 @@ def search_results(request):
                 'address': service.contractor.office_address,
                 'distance_km': float(service.distance_km) if service.distance_km is not None else None,
             })
-    
+
     context = {
         'query': query,
         'location': location,
-            'using_profile_location': using_profile_location,
-            'location_invalid': bool(location and not _parse_location(location)),
+        'using_profile_location': using_profile_location,
+        'location_invalid': bool(location and not _parse_location(location)),
         'categories': categories,
         'contractors': services,
         'contractors_json': json.dumps(contractors_data),
-        'total_results': services.count(),
+        'total_results': total_results,
     }
+
     
     # If HTMX request, return only the results partial
     if request.headers.get('HX-Request'):

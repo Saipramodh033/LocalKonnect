@@ -180,6 +180,14 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
+# Scheduled tasks (requires celery beat worker)
+CELERY_BEAT_SCHEDULE = {
+    'nightly-trust-score-recompute': {
+        'task': 'apps.trust.tasks.batch_recompute_trust_scores',
+        'schedule': 60 * 60 * 24,  # every 24 hours
+    },
+}
+
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
@@ -193,17 +201,12 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@localkonnect.
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 # Trust Score Parameters
-TRUST_DECAY_FACTOR = config('TRUST_DECAY_FACTOR', default=0.5, cast=float)
-TRUST_MIN_WEIGHT = config('TRUST_MIN_WEIGHT', default=0.05, cast=float)
+# TRUST_VERIFIED_BONUS: extra multiplier for feedback backed by proof of work
+# TRUST_SMOOTHING_K:    Bayesian smoothing constant — higher = more conservative with few reviews
+# TRUST_MAX_EXPERIENCE_BONUS: maximum bonus points granted for years_of_experience (cap = 15)
 TRUST_VERIFIED_BONUS = config('TRUST_VERIFIED_BONUS', default=0.5, cast=float)
-TRUST_TIME_DECAY_LAMBDA = config('TRUST_TIME_DECAY_LAMBDA', default=0.01, cast=float)
 TRUST_SMOOTHING_K = config('TRUST_SMOOTHING_K', default=5, cast=int)
 TRUST_MAX_EXPERIENCE_BONUS = config('TRUST_MAX_EXPERIENCE_BONUS', default=15, cast=int)
-
-# Fraud Detection Parameters
-FRAUD_MAX_TRUSTS_PER_HOUR = config('FRAUD_MAX_TRUSTS_PER_HOUR', default=5, cast=int)
-FRAUD_MAX_TRUSTS_PER_DAY = config('FRAUD_MAX_TRUSTS_PER_DAY', default=20, cast=int)
-FRAUD_PATTERN_SCAN_INTERVAL = config('FRAUD_PATTERN_SCAN_INTERVAL', default=30, cast=int)
 
 # AWS S3 Configuration (Optional)
 USE_S3 = config('USE_S3', default=False, cast=bool)
