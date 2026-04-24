@@ -249,7 +249,7 @@
                     </button>
                 </div>
             </div>
-            <div id="locationMap" class="w-full h-96 rounded-lg border border-gray-300"></div>
+            <div id="locationMap" class="w-full h-96 rounded-lg border border-gray-300 relative z-0"></div>
             <p class="text-sm text-gray-600 mt-3">
                 <i class="fas fa-info-circle mr-1"></i>
                 Click on the map to set your office location, or search for an address above
@@ -270,9 +270,49 @@
 let locationMap = null;
 let locationMarker = null;
 let selectedLocation = {
-    lat: {{ profile.office_location.y|default:"40.7128" }},
-    lng: {{ profile.office_location.x|default:"-74.0060" }}
+    lat: parseFloat("{{ profile.office_location.y|default:'40.7128' }}"),
+    lng: parseFloat("{{ profile.office_location.x|default:'-74.0060' }}")
 };
+
+function addTileLayerWithFallback(targetMap) {
+    const primaryTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    });
+
+    const fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    });
+
+    let switchedToFallback = false;
+    primaryTiles.on('tileerror', function() {
+        if (switchedToFallback) {
+            return;
+        }
+        switchedToFallback = true;
+        targetMap.removeLayer(primaryTiles);
+        fallbackTiles.addTo(targetMap);
+    });
+
+    primaryTiles.addTo(targetMap);
+}
+
+async function fetchJson(url) {
+    const response = await fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(payload.error || 'Request failed');
+    }
+    return payload;
+}
 
 function openMapModal() {
     document.getElementById('mapModal').classList.remove('hidden');
@@ -280,11 +320,8 @@ function openMapModal() {
     // Initialize map if not already done
     if (!locationMap) {
         locationMap = L.map('locationMap').setView([selectedLocation.lat, selectedLocation.lng], 13);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(locationMap);
+
+        addTileLayerWithFallback(locationMap);
         
         // Add existing marker if location is set
         locationMarker = L.marker([selectedLocation.lat, selectedLocation.lng], {
@@ -319,10 +356,9 @@ function closeMapModal() {
 function searchLocation() {
     const query = document.getElementById('mapSearchInput').value;
     if (!query) return;
-    
-    // Use Nominatim geocoding API
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
         .then(data => {
             if (data && data.length > 0) {
                 const result = data[0];
@@ -348,7 +384,7 @@ function searchLocation() {
 function reverseGeocode(lat, lng) {
     // Get address from coordinates
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             if (data && data.display_name) {
                 document.querySelector('input[name="office_address"]').value = data.display_name;

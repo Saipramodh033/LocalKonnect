@@ -32,7 +32,7 @@
     
     <!-- Search and Filters -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <form method="get" action="{% url 'search:results' %}" class="space-y-4">
+        <form id="searchForm" method="get" action="{% url 'search:results' %}" class="space-y-4" onsubmit="event.preventDefault(); handleSearchSubmit(event);">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 <!-- Service Category -->
@@ -64,9 +64,10 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
                     <input type="text" 
+                           id="locationInput"
                            name="location" 
                            value="{{ location }}"
-                           placeholder="Latitude,Longitude (e.g. 40.7128,-74.0060)"
+                           placeholder="City, ZIP, or Lat,Lng"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <button type="button" onclick="useCurrentLocation()" class="mt-2 text-xs text-blue-600 hover:text-blue-800">
                         <i class="fas fa-location-arrow mr-1"></i>Use my current location
@@ -76,6 +77,7 @@
                 <!-- Search Button -->
                 <div class="flex items-end">
                     <button type="submit" 
+                            id="searchButton"
                             class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-search mr-2"></i> Search
                     </button>
@@ -157,7 +159,7 @@
     </div>
     
     <!-- Map View -->
-    <div x-show="viewMode === 'map'" x-cloak class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div x-show="viewMode === 'map'" x-cloak class="bg-white rounded-lg shadow-lg overflow-hidden relative z-0">
         <div id="map" style="height: 600px; width: 100%;"></div>
     </div>
 </div>
@@ -169,6 +171,32 @@
 <script>
 let map = null;
 let markers = null;
+
+function addTileLayerWithFallback(targetMap) {
+    const primaryTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    });
+
+    const fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    });
+
+    let switchedToFallback = false;
+    primaryTiles.on('tileerror', function() {
+        if (switchedToFallback) {
+            return;
+        }
+        switchedToFallback = true;
+        targetMap.removeLayer(primaryTiles);
+        fallbackTiles.addTo(targetMap);
+    });
+
+    primaryTiles.addTo(targetMap);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize map immediately
@@ -193,11 +221,7 @@ function initMap() {
         scrollWheelZoom: true
     });
     
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(map);
+    addTileLayerWithFallback(map);
     
     // Add markers for contractors
     {% if contractors %}
@@ -205,31 +229,33 @@ function initMap() {
     
     {% for service in contractors %}
     {% if service.contractor.office_location %}
-    const marker{{ forloop.counter }} = L.marker([{{ service.contractor.office_location.y }}, {{ service.contractor.office_location.x }}])
-        .bindPopup(`
-            <div class="p-2">
-                <h3 class="font-bold text-lg mb-2">{{ service.contractor.business_name|default:service.contractor.user.get_full_name }}</h3>
-                <p class="text-sm text-gray-600 mb-2">{{ service.category.name }}</p>
-                <div class="flex items-center mb-2">
-                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        Trust Score: {{ service.trust_score|floatformat:0 }}
-                    </span>
-                    {% if service.contractor.is_identity_verified %}
-                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                        <i class="fas fa-check-circle"></i> Verified
-                    </span>
+    {
+        const marker = L.marker([parseFloat("{{ service.contractor.office_location.y }}"), parseFloat("{{ service.contractor.office_location.x }}")])
+            .bindPopup(`
+                <div class="p-2">
+                    <h3 class="font-bold text-lg mb-2">{{ service.contractor.business_name|default:service.contractor.user.get_full_name|escapejs }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">{{ service.category.name|escapejs }}</p>
+                    <div class="flex items-center mb-2">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            Trust Score: {{ service.trust_score|floatformat:0 }}
+                        </span>
+                        {% if service.contractor.is_identity_verified %}
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            <i class="fas fa-check-circle"></i> Verified
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if service.distance_km is not None %}
+                    <p class="text-xs text-gray-500 mb-2">Distance: {{ service.distance_km|floatformat:1 }} km</p>
                     {% endif %}
+                    <a href="{% url 'search:contractor_detail' service.contractor.id %}" 
+                       class="inline-block bg-blue-600 !text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                        View Profile
+                    </a>
                 </div>
-                {% if service.distance_km is not None %}
-                <p class="text-xs text-gray-500 mb-2">Distance: {{ service.distance_km|floatformat:1 }} km</p>
-                {% endif %}
-                <a href="{% url 'search:contractor_detail' service.contractor.id %}" 
-                   class="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                    View Profile
-                </a>
-            </div>
-        `);
-    markers.addLayer(marker{{ forloop.counter }});
+            `);
+        markers.addLayer(marker);
+    }
     {% endif %}
     {% endfor %}
     
@@ -255,6 +281,39 @@ function useCurrentLocation() {
             locationInput.value = `${lat},${lng}`;
         }
     });
+}
+
+async function handleSearchSubmit(e) {
+    const locationInput = document.getElementById('locationInput');
+    const val = locationInput.value.trim();
+    
+    // If it's empty, or already looks like lat,lng (numbers with comma)
+    if (!val || val.match(/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/)) {
+        document.getElementById('searchForm').submit();
+        return;
+    }
+
+    e.preventDefault();
+    const btn = document.getElementById('searchButton');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Searching...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            const lat = data[0].lat;
+            const lon = data[0].lon;
+            locationInput.value = `${lat},${lon}`;
+        }
+    } catch (err) {
+        console.error('Geocoding failed:', err);
+    }
+    
+    document.getElementById('searchForm').submit();
+    return false;
 }
 </script>
 {% endblock %}
